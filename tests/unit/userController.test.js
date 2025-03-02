@@ -1,7 +1,7 @@
 const { sendResponse } = require("../../src/controllers/userController");
 
 describe("sendResponse function", () => {
-  it('should send "respond with a resource"', () => {
+  it("should send \"respond with a resource\"", () => {
     const req = {}; // Mock request
     const res = { send: jest.fn() }; // Mock response with a jest function
     const next = jest.fn(); // Mock next function
