@@ -1,4 +1,4 @@
-const { sendResponse } = require("../../src/controllers/userController");
+import { sendResponse } from "../../src/controllers/userController";
 
 describe("sendResponse function", () => {
   it("should send \"respond with a resource\"", () => {

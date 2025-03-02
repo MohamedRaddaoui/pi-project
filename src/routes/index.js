@@ -1,9 +1,9 @@
-var express = require("express");
-var router = express.Router();
+import { Router } from "express";
+var router = Router();
 
 /* GET home page. */
 router.get("/", function (res) {
   res.send("Approved");
 });
 
-module.exports = router;
+export default router;
