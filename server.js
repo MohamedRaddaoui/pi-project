@@ -2,13 +2,17 @@ const app = require("./app"); // Import app
 const PORT = process.env.PORT || 3000;
 
 const server = app.listen(PORT, () => {
-  console.log(`🚀 Server running on http://localhost:${PORT}`);
+  if (process.env.NODE_ENV !== "prod") {
+    console.log(`🚀 Server running on http://localhost:${PORT}`); // eslint-disable-line no-console
+  }
 });
 
 // Handle server shutdown gracefully
 process.on("SIGINT", () => {
   server.close(() => {
-    console.log("Server closed.");
+    if (process.env.NODE_ENV !== "prod") {
+      console.log("Server Closed."); // eslint-disable-line no-console
+    }
     process.exit(0);
   });
 });
