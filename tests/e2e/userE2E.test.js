@@ -1,5 +1,5 @@
 const request = require("supertest");
-const server = require("../../server").default; // ✅ Import only the app, not the server
+const server = require("../../server"); // ✅ Import only the app, not the server
 
 describe("E2E Test: GET /users", () => {
   it("should return a valid response from the running server", async () => {
