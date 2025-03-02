@@ -1,4 +1,4 @@
-function sendResponse(res) {
+function sendResponse(_req, res) {
   res.send("respond with a resource");
 }
 
