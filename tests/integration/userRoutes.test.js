@@ -1,6 +1,6 @@
-import request from "supertest";
-import express from "express";
-import userRouter from "../../src/routes/users";
+const request = require("supertest");
+const express = require("express");
+const userRouter = require("../../src/routes/users");
 
 const app = express();
 app.use("/users", userRouter);

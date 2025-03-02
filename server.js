@@ -1,7 +1,7 @@
-import { listen } from "./app"; // Import app
+const app = require("./app"); // Import app
 const PORT = process.env.PORT || 3000;
 
-const server = listen(PORT, () => {
+const server = app.listen(PORT, () => {
   if (process.env.NODE_ENV !== "prod") {
     console.log(`🚀 Server running on http://localhost:${PORT}`); // eslint-disable-line no-console
   }
@@ -17,4 +17,4 @@ process.on("SIGINT", () => {
   });
 });
 
-export default server;
+module.exports = server;

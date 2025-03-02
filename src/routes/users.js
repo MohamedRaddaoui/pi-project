@@ -1,8 +1,8 @@
-import { Router } from "express";
-var router = Router();
-import { sendResponse } from "../controllers/userController.js";
+var express = require("express");
+var router = express.Router();
+var userCtrl = require("../controllers/userController.js");
 
 /* GET users listing. */
-router.get("/", sendResponse);
+router.get("/", userCtrl.sendResponse);
 
-export default router;
+module.exports = router;
