@@ -5,9 +5,11 @@
   "main": "app.js",
   "scripts": {
     "start": "node server.js",
-    "lint": "eslint . -- --fix",
-    "test": "jest -- --coverage",
-    "e2e": "cypress run"  
+    "lint": "eslint . --ext .js,.ts --fix",
+    "test": "jest --coverage",
+    "e2e": "cypress run",
+    "e2e:open": "cypress open",
+    "e2e:close": "cypress close"
   },
   "dependencies": {
     "cookie-parser": "~1.4.4",
