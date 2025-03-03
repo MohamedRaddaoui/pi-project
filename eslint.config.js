@@ -1,7 +1,7 @@
 // eslint.config.js
 module.exports = [
   {
-    ignores: ["node_modules/", "dist/", "coverage/", "reports/"], // Ignore unnecessary files
+    ignores: ["node_modules/", "dist/", "coverage/", "reports/", "cypress/"], // Ignore unnecessary files
   },
   {
     files: ["**/*.js", "**/*.ts"], // Apply ESLint to JavaScript and TypeScript files
