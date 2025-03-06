@@ -1,32 +1,63 @@
-version: '3'
+version: "3"
+
+networks:
+  app_network: # Define a custom network
+    driver: bridge
 
 services:
-  backend:
+  backend0:
     build:
       context: .
       dockerfile: Dockerfile
     env_file:
       - .env
+    networks:
+      - app_network
+    restart: always
+
+  backend1:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    networks:
+      - app_network
+    restart: always
+
+  backend2:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    networks:
+      - app_network
+    restart: always
+
+  backend3:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    networks:
+      - app_network
+    restart: always
+
+  frontend:
+    build:
+      context: ../front-project
+      dockerfile: Dockerfile
+    env_file:
+      - .env
+    networks:
+      - app_network
     ports:
-      - "3000:3000"
-
-
-
-
-
-
-
-# Future use when the front is ready
-    # depends_on:
-    #   - frontend
-
-  # frontend:
-  #   build:
-  #     context: ./frontend
-  #     dockerfile: Dockerfile
-  #   env_file:
-  #     - .env
-  #   ports:
-  #     - "4200:4200"
-  #   depends_on:
-  #     - backend
+      - "80:80"
+    depends_on:
+      - backend0
+      - backend1
+      - backend2
+      - backend3
+    restart: always
