@@ -1,5 +1,4 @@
 const app = require("./app"); // Import app
-
 const connectDB = require("./src/config/config"); // Import DB connection
 
 const PORT = process.env.PORT || 3000;
