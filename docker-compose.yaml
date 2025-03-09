@@ -5,59 +5,61 @@ networks:
     driver: bridge
 
 services:
-  backend0:
+  backend:
     build:
       context: .
       dockerfile: Dockerfile
     env_file:
       - .env
-    networks:
-      - app_network
-    restart: always
-
-  backend1:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    env_file:
-      - .env
-    networks:
-      - app_network
-    restart: always
-
-  backend2:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    env_file:
-      - .env
-    networks:
-      - app_network
-    restart: always
-
-  backend3:
-    build:
-      context: .
-      dockerfile: Dockerfile
-    env_file:
-      - .env
-    networks:
-      - app_network
-    restart: always
-
-  frontend:
-    build:
-      context: ../front-project
-      dockerfile: Dockerfile
-    env_file:
-      - .env
-    networks:
-      - app_network
     ports:
-      - "80:80"
-    depends_on:
-      - backend0
-      - backend1
-      - backend2
-      - backend3
+      - "5000:5000"
+    networks:
+      - app_network
     restart: always
+
+  # backend1:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   env_file:
+  #     - .env
+  #   networks:
+  #     - app_network
+  #   restart: always
+
+  # backend2:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   env_file:
+  #     - .env
+  #   networks:
+  #     - app_network
+  #   restart: always
+
+  # backend3:
+  #   build:
+  #     context: .
+  #     dockerfile: Dockerfile
+  #   env_file:
+  #     - .env
+  #   networks:
+  #     - app_network
+  #   restart: always
+
+  # frontend:
+  #   build:
+  #     context: ../front-project
+  #     dockerfile: Dockerfile
+  #   env_file:
+  #     - .env
+  #   networks:
+  #     - app_network
+  #   ports:
+  #     - "80:80"
+  #   depends_on:
+  #     - backend0
+  #     - backend1
+  #     - backend2
+  #     - backend3
+  #   restart: always
