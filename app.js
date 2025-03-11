@@ -4,9 +4,11 @@ var cookieParser = require("cookie-parser");
 var logger = require("morgan");
 require('dotenv').config()
 
+// Use the base URL from the .env file for all routes
+const baseUrl = process.env.BASE_URL || "/api"; // Default to '/api' if not specified
+
 var indexRouter = require("./src/routes/index");
-var usersRouter = require("./src/routes/users");
-var projectsRouter = require("./src/routes/project");
+
 
 var app = express();
 
@@ -19,8 +21,6 @@ app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
 
-app.use("/", indexRouter);
-app.use("/users", usersRouter);
-app.use("/project",projectsRouter);
+app.use(baseUrl + "/", indexRouter);
 
 module.exports = app;
