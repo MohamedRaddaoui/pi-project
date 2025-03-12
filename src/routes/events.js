@@ -6,6 +6,7 @@ const {
   validateObjectId,
 } = require("../middlewares/validation");
 
+
 /**
  * @swagger
  * tags:
@@ -158,5 +159,12 @@ router.patch("/:id", validateObjectId, eventController.updateEvent);
  *         description: Event not found
  */
 router.delete("/:id", validateObjectId, eventController.deleteEvent);
+
+router.post("/", validateEvent, eventController.createEvent); // Create event
+router.get("/", eventController.getAllEvents); // Get all events
+router.get("/:id", validateObjectId, eventController.getEventById); // Get event by ID
+router.patch("/:id", validateObjectId, eventController.updateEvent); // Update event
+router.delete("/:id", validateObjectId, eventController.deleteEvent); // Delete event
+
 
 module.exports = router;
