@@ -1,16 +1,9 @@
-const express = require("express");
-const eventRoutes = require("./events");
-const userRoutes = require("./users");
-const projectRoutes = require("./project");
+var express = require("express");
+var router = express.Router();
 
-const router = express.Router();
-
-// Use event routes
-router.use("/events", eventRoutes);
-
-// Use user routes
-router.use("/users", userRoutes);
-
-router.use("/project",projectRoutes)
+/* GET home page. */
+router.get("/", function (_req, res) {
+  res.send("Approved");
+});
 
 module.exports = router;
