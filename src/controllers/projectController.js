@@ -7,7 +7,7 @@ async function addProject(req, res){
     try{
         const project = new Project (req.body)
         await project.save()
-         res.status(200).json({message:"Event created successfully", project:project})
+         res.status(200).json({message:"Project created successfully", project:project})
          
     }catch(err){
         res.status(400).json({ error: err.message });
@@ -35,6 +35,17 @@ async function getProjectByID(req,res){
     }
 }
 
+// Update Project
+async function updateProject(req , res){
+    try{
+        const project = await Project.findByIdAndUpdate(req.params.id,req.body, {new: true})
+        if (!project) return res.status(400).json({"message":"Project not found"})
+            res.status(200).json({"message":"Project updated successfully", project:project})
+    }catch(err){
+        res.status(500).json({error: err.message })
+    }
+}
+
 //Delete a project
 async function deleteProject(req,res){
     try{
@@ -51,4 +62,4 @@ async function deleteProject(req,res){
 
 
 
-module.exports={addProject,getAllProject,getProjectByID,deleteProject}
+module.exports={addProject,getAllProject,getProjectByID,updateProject,deleteProject}
