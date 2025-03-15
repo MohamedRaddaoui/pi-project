@@ -1,10 +1,9 @@
 const Project = require('../models/project')
 
-
-
 // Create new Project
-async function addProject(req, res){
+async function createProject(req, res){
     try{
+        
         const project = new Project (req.body)
         await project.save()
          res.status(200).json({message:"Project created successfully", project:project})
@@ -13,10 +12,11 @@ async function addProject(req, res){
         res.status(400).json({ error: err.message });
   }
 }
+
 //Get all Projects
 async function getAllProject(req,res){
     try {
-        const project = await Project.find()
+        const project = await Project.find().select('title descriptio category status startDate endDate')
         res.status(200).json(project)
     }catch (err){
         res.status(500).json({error: err.message })
@@ -62,4 +62,4 @@ async function deleteProject(req,res){
 
 
 
-module.exports={addProject,getAllProject,getProjectByID,updateProject,deleteProject}
+module.exports={createProject,getAllProject,getProjectByID,updateProject,deleteProject}
