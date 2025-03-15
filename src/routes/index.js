@@ -2,6 +2,7 @@ const express = require("express");
 const eventRoutes = require("./events");
 const userRoutes = require("./users");
 const projectRoutes = require("./project");
+const taskRoutes = require("./tasks");
 
 const router = express.Router();
 
@@ -12,5 +13,10 @@ router.use("/events", eventRoutes);
 router.use("/users", userRoutes);
 // Use Project routes
 router.use("/project", projectRoutes);
+
+module.exports = router;
+// Use tasks routes
+
+router.use("/tasks", taskRoutes);
 
 module.exports = router;
