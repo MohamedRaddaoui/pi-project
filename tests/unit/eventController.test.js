@@ -27,8 +27,11 @@ describe("Event Controller Unit Tests", () => {
       body: { title: "Test Event", date: "2025-03-12", attendees: [] },
     };
 
-    const eventMock = new Event(req.body); // Simulate Mongoose instance
-    jest.spyOn(eventMock, "save").mockResolvedValue(req.body); // Mock save method
+    // Mock Event constructor and save method
+    const eventMock = { _id: "123", ...req.body };
+    jest.spyOn(Event.prototype, "save").mockResolvedValue(eventMock); // Ensure save() returns eventMock
+
+    jest.spyOn(Event, "create").mockResolvedValue(eventMock); // Alternative mock
 
     await eventController.createEvent(req, res);
 
@@ -40,14 +43,22 @@ describe("Event Controller Unit Tests", () => {
   });
 
   test("should handle errors when creating an event", async () => {
-    const req = { body: { title: "Test Event" } };
+    // Mock the Event.create method to throw an error
+    jest.spyOn(Event, "create").mockRejectedValue(new Error("Database error"));
 
-    Event.prototype.save = jest
-      .fn()
-      .mockRejectedValue(new Error("Database error"));
+    const req = {
+      body: {
+        title: "Test Event",
+      },
+    };
+    const res = {
+      status: jest.fn().mockReturnThis(),
+      json: jest.fn(),
+    };
 
     await eventController.createEvent(req, res);
 
+    // Ensure the controller responds with a 400 status and error message
     expect(res.status).toHaveBeenCalledWith(400);
     expect(res.json).toHaveBeenCalledWith({ error: "Database error" });
   });
