@@ -3,11 +3,8 @@ const Event = require("../models/event"); // Import Event model
 // 📌 Create an Event
 exports.createEvent = async (req, res) => {
   try {
-    const event = new Event(req.body);
-    await event.save();
-    res
-      .status(201)
-      .json({ message: "Event created successfully", event: event });
+    const event = await Event.create(req.body);
+    res.status(201).json({ message: "Event created successfully", event });
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
@@ -16,9 +13,7 @@ exports.createEvent = async (req, res) => {
 // 📌 Get All Events
 exports.getAllEvents = async (req, res) => {
   try {
-    // Uncomment after integrating with user
-    // const events = await Event.find().populate("attendees createdBy");
-    const events = await Event.find();
+    const events = await Event.find().populate("attendees createdBy");
     res.status(200).json(events);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -28,11 +23,9 @@ exports.getAllEvents = async (req, res) => {
 // 📌 Get Event by ID
 exports.getEventById = async (req, res) => {
   try {
-    // Uncomment after integrating with user
-    // const event = await Event.findById(req.params.id).populate(
-    //   "attendees createdBy"
-    // );
-    const event = await Event.findById(req.params.id);
+    const event = await Event.findById(req.params.id).populate(
+      "attendees createdBy"
+    );
     if (!event) return res.status(404).json({ message: "Event not found" });
     res.status(200).json(event);
   } catch (error) {
