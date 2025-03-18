@@ -16,7 +16,6 @@ router.use("/project", projectRoutes);
 
 module.exports = router;
 // Use tasks routes
-
 router.use("/tasks", taskRoutes);
 
 module.exports = router;
