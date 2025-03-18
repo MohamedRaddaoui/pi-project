@@ -12,7 +12,6 @@ router.use("/events", eventRoutes);
 router.use("/users", userRoutes);
 
 // Use tasks routes
-
 router.use("/tasks", taskRoutes);
 
 module.exports = router;

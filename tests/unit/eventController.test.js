@@ -35,7 +35,7 @@ describe("Event Controller Unit Tests", () => {
     expect(res.status).toHaveBeenCalledWith(201);
     expect(res.json).toHaveBeenCalledWith({
       message: "Event created successfully",
-      event: req.body,
+      event: eventMock,
     });
   });
 
