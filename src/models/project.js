@@ -1,7 +1,7 @@
 
-const mongoose=require("mongoose")
+const mongoose=require("mongoose");
 
-const Schema= mongoose.Schema
+const Schema= mongoose.Schema;
 const Project=new Schema({
     title:{
         type:String,
@@ -35,8 +35,8 @@ const Project=new Schema({
     status:{
         type: String,
         trim: true,
-        enum: ['Not Started','In Progress', 'Done', 'Canceled'],
-        default: 'Not Started',
+        enum: ["Not Started","In Progress", "Done", "Canceled"],
+        default: "Not Started",
     },
     category:{
         type:String,
@@ -54,5 +54,5 @@ const Project=new Schema({
     }]
 
 
-})
-module.exports=mongoose.model('project', Project)
+});
+module.exports=mongoose.model("Project", Project);
