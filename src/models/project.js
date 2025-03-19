@@ -37,6 +37,7 @@ const Project=new Schema({
         trim: true,
         enum: ["Not Started","In Progress", "Done", "Canceled"],
         default: "Not Started",
+
     },
     category:{
         type:String,

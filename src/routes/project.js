@@ -4,7 +4,6 @@ var projectCtrl = require("../controllers/projectController");
 const {
     validateProject,
     validateObjectId,
-
 }= require("../middlewares/projectValidation");
 
 
@@ -13,6 +12,7 @@ router.get("/ProjectByID/:id",validateObjectId,projectCtrl.getProjectByID); //Ge
 router.get("/ListProject",projectCtrl.getAllProject); // Show all Project
 router.put("/UpdateProject/:id",validateObjectId, projectCtrl.updateProject);  //update Project
 router.delete("/DeleteProject/:id",validateObjectId,projectCtrl.deleteProject);  //Delete Project
+
 
 
 module.exports = router;
