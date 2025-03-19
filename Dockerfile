@@ -4,9 +4,11 @@ FROM node:22-alpine
 # Set working directory
 WORKDIR /usr/src/app
 
-# Copy package.json and install dependencies
+# Copy package.json and package-lock.json (if present)
 COPY package*.json ./
-RUN npm ci --only=production
+
+# Install dependencies (using npm install to ensure all dependencies are installed)
+RUN npm install --only=production
 
 # Copy source code
 COPY . .

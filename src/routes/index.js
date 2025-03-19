@@ -22,4 +22,10 @@ router.use("/tasks", taskRoutes);
 // Use forum routes
 router.use("/forum", forumRoutes);
 
+// Use tasks routes
+router.use("/tasks", taskRoutes);
+
+// Use forum routes
+router.use("/forum", forumRoutes);
+
 module.exports = router;
