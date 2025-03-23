@@ -2,8 +2,8 @@ var express = require("express");
 var path = require("path");
 var cookieParser = require("cookie-parser");
 var logger = require("morgan");
-require('dotenv').config()
-
+require("dotenv").config();
+const setupSwagger = require("./swagger");
 // Use the base URL from the .env file for all routes
 const baseUrl = process.env.BASE_URL || "/api"; // Default to '/api' if not specified
 
