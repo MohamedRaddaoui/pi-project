@@ -253,6 +253,115 @@ const swaggerOptions = {
             updatedAt: "2025-03-15T10:30:00Z",
           },
         },
+        //Task schema
+        Task: {
+          type: "object",
+          required: ["title", "projectId"],
+          properties: {
+            _id: {
+              type: "string",
+              description: "Auto-generated ID of the task",
+            },
+            title: {
+              type: "string",
+              description: "Task title",
+            },
+            description: {
+              type: "string",
+              description: "Task details",
+            },
+            status: {
+              type: "string",
+              enum: ["To Do", "In Progress", "Done"],
+              default: "To Do",
+            },
+            priority: {
+              type: "string",
+              enum: ["Low", "Medium", "High"],
+              default: "Medium",
+            },
+            dueDate: {
+              type: "string",
+              format: "date",
+              description: "Due date of the task",
+            },
+            projectId: {
+              type: "string",
+              description: "Project ID the task belongs to",
+            },
+            assignedUser: {
+              type: "string",
+              description: "ID of the assigned user",
+            },
+            createdAt: {
+              type: "string",
+              format: "date-time",
+            },
+            updatedAt: {
+              type: "string",
+              format: "date-time",
+            },
+          },
+          example:{
+             _id: "60d21b4667d0d8992e610c95",
+             title: "Updated Task Title",
+             description: "This task has been updated with new details.",
+             status: "In Progress",
+             priority: "Medium",
+             dueDate: "2025-03-22",
+             projectId: "65f123456789abcdef123456",
+             assignedUser: "65fabcdef123456789abcdef",
+             createdAt: "2025-03-11T10:00:00Z",
+	           updatedAt: "2025-03-15T12:00:00Z"
+	         }
+        },
+      // TaskCreate schema (for creating tasks)
+        TaskCreate: {
+        type: "object",
+        required: ["title", "projectId"],
+        properties: {
+          title: {
+            type: "string",
+            description: "Task title"
+          },
+          description: {
+            type: "string",
+            description: "Task details"
+          },
+          status: {
+            type: "string",
+            enum: ["To Do", "In Progress", "Done"],
+            default: "To Do"
+          },
+          priority: {
+            type: "string",
+            enum: ["Low", "Medium", "High"],
+            default: "Medium"
+          },
+          dueDate: {
+            type: "string",
+            format: "date",
+            description: "Due date of the task"
+          },
+          projectId: {
+            type: "string",
+            description: "Project ID the task belongs to"
+          },
+          assignedUser: {
+            type: "string",
+            description: "ID of the assigned user"
+          }
+        },
+        example: {
+          title: "New Task",
+          description: "This is a test task",
+          status: "To Do",
+          priority: "High",
+          dueDate: "2025-03-20",
+          projectId: "65f123456789abcdef123456",
+          assignedUser: "65fabcdef123456789abcdef"
+        }
+       },
       },
     },
     security: [{ BearerAuth: [] }],
