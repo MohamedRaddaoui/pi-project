@@ -97,3 +97,14 @@ exports.validateTask = [
     next();
   },
 ];
+exports.validateComment = [
+  body("user").isMongoId().withMessage("Invalid user ID."),
+  body("text").notEmpty().withMessage("Comment text is required.").trim(),
+  (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+    next();
+  },
+];

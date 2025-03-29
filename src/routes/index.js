@@ -2,7 +2,7 @@ const express = require("express");
 const eventRoutes = require("./events");
 const userRoutes = require("./users");
 const projectRoutes = require("./project");
-const taskRoutes = require("./tasks");
+const taskRoutes = require("./Task/tasks");
 const forumRoutes = require("./forums");
 
 const router = express.Router();
