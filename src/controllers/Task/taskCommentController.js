@@ -1,9 +1,17 @@
 const TaskComment = require("../../models/Task/taskComment");
 const Task = require("../../models/Task/task");
-
+const fs = require("fs");
+const path = require("path");
 exports.addComment = async (req, res) => {
   try {
-    const { taskId, userId, text, attachments } = req.body;
+    const { taskId, userId, text } = req.body;
+    const files = req.files;  // Récupération des fichiers envoyés dans le corps de la requête
+
+    // Vérification que les fichiers sont présents
+    let attachments = [];
+    if (files && files.length > 0) {
+      attachments = files.map(file => file.path);  // Enregistrer le chemin des fichiers
+    }
     // Vérifier si la tâche existe
     const task = await Task.findById(taskId);
     if (!task) {
