@@ -98,7 +98,8 @@ exports.validateTask = [
   },
 ];
 exports.validateComment = [
-  body("user").isMongoId().withMessage("Invalid user ID."),
+  body("taskId").isMongoId().withMessage("Invalid task ID."),
+  body("userId").isMongoId().withMessage("Invalid user ID."),
   body("text").notEmpty().withMessage("Comment text is required.").trim(),
   (req, res, next) => {
     const errors = validationResult(req);

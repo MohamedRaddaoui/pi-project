@@ -1,15 +1,22 @@
-const Comment = require("../../models/Task/taskComment");
+const TaskComment = require("../../models/Task/taskComment");
 const Task = require("../../models/Task/task");
 
-//  Ajouter un commentaire
 exports.addComment = async (req, res) => {
   try {
     const { taskId, userId, text, attachments } = req.body;
-    const comment = new Comment({ task: taskId, user: userId, text, attachments });
+    // Vérifier si la tâche existe
+    const task = await Task.findById(taskId);
+    if (!task) {
+      return res.status(404).json({ error: "Task not found" });
+    }
+
+    // Créer le commentaire
+    const comment = new TaskComment({ task: taskId, user: userId, text, attachments });
     await comment.save();
 
     // Ajouter le commentaire à la tâche
-    await Task.findByIdAndUpdate(taskId, { $push: { comments: comment._id } });
+    task.comments.push({ user: userId, text });
+    await task.save();
 
     res.status(201).json({ message: "Comment added successfully", comment });
   } catch (error) {
