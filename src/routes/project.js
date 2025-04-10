@@ -5,14 +5,31 @@ const {
     validateProject,
     validateObjectId,
 
-}= require("../middlewares/projectValidation")
+}= require("../middlewares/projectValidation");
 
-
-router.post("/AddProject",validateProject,projectCtrl.createProject)  //Add new project
-router.get("/ProjectByID/:id",validateObjectId,projectCtrl.getProjectByID) //Get project by ID
-router.get("/ListProject",projectCtrl.getAllProject) // Show all Project
-router.put("/UpdateProject/:id",validateObjectId, projectCtrl.updateProject)  //update Project
-router.delete("/DeleteProject/:id",validateObjectId,projectCtrl.deleteProject)  //Delete Project
-
+//Add new project
+router.post("/addProject",validateProject,projectCtrl.createProject);  
+//Show project by ID
+router.get("/projectByID/:id",validateObjectId,projectCtrl.getProjectByID); 
+// Show all Project
+router.get("/listProject",projectCtrl.getAllProject); 
+//update Project
+router.put("/updateProject/:id",validateObjectId, projectCtrl.updateProject); 
+// Delete project
+router.delete("/deleteProject/:id", projectCtrl.deleteProjectAndTasks); 
+// Assign user to Project
+router.post("/assignUserToProject", projectCtrl.assignUserToProject); 
+//Remove user from Project
+router.delete("/removeMember/:projectId/:userId", projectCtrl.removeMemberFromProject); 
+//Archived Project
+router.put("/archiveProject/:id", projectCtrl.archiveProject);
+//Restore Project
+router.put("/restoreProject/:id",projectCtrl.restoreProject);
+//show list of archived project 
+router.get("/getArchProject",projectCtrl.getAllArchivedProject);
+//show project by user 
+router.get("/getProjectByUser/:id",projectCtrl.getProjectByUser);
+//  Delete tasks selected by Project
+router.delete("/DeleteTaskByProject/:id", projectCtrl.deleteSomeTasksFromProject);
 
 module.exports = router;

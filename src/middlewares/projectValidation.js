@@ -1,5 +1,6 @@
-const {body,validationResult} = require ('express-validator');
-const mongoose = require('mongoose')
+const {body,validationResult} = require ("express-validator");
+const mongoose = require("mongoose");
+const User =require('../models/user');
 
 // Middleware to validate MongoDB ObjectId
 exports.validateObjectId = (req, res, next) => {
@@ -11,27 +12,27 @@ exports.validateObjectId = (req, res, next) => {
 
 //Middleware to validate Project
 exports.validateProject =[
-    body('title')
+    body("title")
     .notEmpty()
     .withMessage("Project name is required")
     .isLength({min:3})
     .withMessage("Project name must be at least 3 characters long.")
     .trim(),
 
-    body('description')
+    body("description")
     .notEmpty()
     .withMessage("Description is required")
-    .isLength({min : 200}).withMessage("description name must be at least 200 characters long.")
+    .isLength({min : 100}).withMessage("description name must be at least 100 characters long.")
     .trim(),
 
-    body('startDate')
+    body("startDate")
     .notEmpty().withMessage(" Start date is required")
     .isISO8601()  // Checks if startDate follows the ISO 8601 format.
     .withMessage("Invalid date format")
     .bail()
     .customSanitizer((value) => new Date(value))  // Convert to date object
     .custom((startDate, {req}) => {
-           const endDate = new Date(req.body.endDate) // Get the endDate from the request body
+           const endDate = new Date(req.body.endDate); // Get the endDate from the request body
            const today = new Date();
         
            // Remove time part to compare only dates
@@ -47,7 +48,7 @@ exports.validateProject =[
          return true;
 
      }),
-    body('endDate')
+    body("endDate")
     .notEmpty().withMessage("End date is required")
     .isISO8601()  // Checks if startDate follows the ISO 8601 format.
     .withMessage("Invalid date format")
@@ -65,50 +66,35 @@ exports.validateProject =[
        return true;
 
       }),
+      
+      body('ownerID')
+        .optional()
+        .isMongoId()  // Check if  ownerID a valid ObjectId 
+        .withMessage("Invalid owner ID")
+        .custom(async (ownerId) => {
+          const user = await User.findById(ownerId);  // search user
+          if (!user) {
+            throw new Error("User not found");
+          }
+      
+          // check if user is a owner(chef)
+          if (user.role !== "chefProjet") {
+            throw new Error("User must be a 'chef de projet'");
+          }
+      
+          return true; 
+        }),
+      
 
-    //   body('ownerID')
-    //   .notEmpty().withMessage("Owner ID is required")
-    //   .isMongoId() // Checks if ownerId is a valid MongoDB ObjectId
-    //   .withMessage("Invalid owner ID")
-    //   .customSanitizer((value)=> value.map((user) => user._id))
-    //   .custom(async (ownerId) => {
-    //   const existingOwnerId = await User.find({ _id: { $in: ownerId } });
-    //   if (existingOwnerId.length !== users.length) {
-    //     throw new Error("User not exist");
-    //   }
-    // }),
-
-    body('status')
+    body("status")
     .optional()
     .trim()
     .isIn(["Not Started","In Progress", "Done", "Canceled"])
     .withMessage("Invalid Status"),
 
-    //   body('usersID')
-    //   .customSanitizer((value) => value.map((user) => user._id)) // Extract only the user IDs
-    //   .custom(async (users) => {
-    //     if (users.length === 0) {
-    //       throw new Error("At least one user is required");
-    //       }
-    //        // Database verification to check if the users exist
-    // const existingUsers = await User.find({ _id: { $in: users } });
-    // if (existingUsers.length !== users.length) {
-    //   throw new Error("Users not exist");
-    // }
-    //       return true;
-    
-    //  }),
 
-    //  body('tasksID')
-    //  .customSanitizer((value) => value.map((task) => task._id)) // Extract only the user IDs
-    //   .custom(async (tasksID) => {
-    //     if (tasksID.length === 0) {
-    //       throw new Error("At least one user is required");
-    //       }
-    //       return true;
-    
-    //  }),
-     
+  
+  
     
           
 // Check for validation errors
@@ -126,5 +112,5 @@ exports.validateProject =[
 
 
     
-]
+];
 

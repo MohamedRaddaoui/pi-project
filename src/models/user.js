@@ -5,8 +5,8 @@ const User=new Schema({
     firstname:String,
     lastname:String,
     email:String,
-    password:Number,
-    role:Number,
+    password:String,
+    role:String,
     createdAt:Date      
          
 });  
