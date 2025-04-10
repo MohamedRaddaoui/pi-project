@@ -56,10 +56,10 @@ async function deleteProjectAndTasks (req, res) {
     try {
       const {id: projectId } = req.params;
   
-      // 1. Supprimer les tâches associées au projet
+      // 1. delete all tasks associated with the project
       const deleteTasksResult = await Task.deleteMany({ projectId });
   
-      // 2. Supprimer le projet
+      // 2. delete project
       const project = await Project.findByIdAndDelete(projectId);
   
       if (!project) {
@@ -97,7 +97,6 @@ async function assignUserToProject(req, res) {
 
 
 // 📌 Get Project By User
-
 async function getProjectByUser(req,res){
     try{
         const project = await Project.find({usersID:req.params.id})
@@ -106,7 +105,6 @@ async function getProjectByUser(req,res){
         res.status(500).json({error: err.message})
     }
 }
-
 
 // 📌 Delete Member from project
 async function removeMemberFromProject(req, res) {
@@ -123,12 +121,7 @@ async function removeMemberFromProject(req, res) {
     }
 }
 
-
-
-
-
 // 📌 Archived Project
-
 async function archiveProject(req, res) {
     try {
         const project = await Project.findById(req.params.id);
@@ -141,6 +134,7 @@ async function archiveProject(req, res) {
         res.status(500).json({ error: error.message });
     }
 }
+
 // 📌 Get All Project archived
 async function getAllArchivedProject (req,res) {
     try{
@@ -152,6 +146,7 @@ async function getAllArchivedProject (req,res) {
     }
 
 }
+
 // 📌 Restore Project
 async function restoreProject(req, res) {
     try {
@@ -165,8 +160,6 @@ async function restoreProject(req, res) {
         res.status(500).json({ "error": error.message });
     }
 }
-
-
 
 
 // 📌 Update  status Project 
@@ -224,13 +217,5 @@ const updateProjectStatus = async (projectId) => {
     }
   };
   
-
-
-
-  
-
-
-
-
 
 module.exports={createProject,getAllProject,getProjectByID,updateProject,assignUserToProject,getProjectByUser,removeMemberFromProject,archiveProject,getAllArchivedProject,restoreProject,updateProjectStatus,deleteProjectAndTasks,deleteSomeTasksFromProject};

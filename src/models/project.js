@@ -50,7 +50,12 @@ const Project=new Schema({
         type:Array,
           task: mongoose.Schema.ObjectId,
           ref : "Tasks",
-    }]
+    }],
+
+    archived:{
+        type:Boolean,
+        default:false
+    }
 
 
 })
