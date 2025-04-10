@@ -6,8 +6,11 @@ const TaskCommentSchema = new mongoose.Schema(
     user: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: true },
     text: { type: String, required: true },
     createdAt: { type: Date, default: Date.now },
-    attachments: [{ type: String }], // Store file paths of the uploaded files
-  },
+    attachments: [{
+        filename: String,
+        contentType: String,
+        data: Buffer
+      }]  },
   { timestamps: true }
 );
 
