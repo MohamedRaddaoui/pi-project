@@ -25,6 +25,7 @@
     ]
   },
   "dependencies": {
+    "bcrypt": "^5.1.1",
     "cookie-parser": "~1.4.4",
     "debug": "~2.6.9",
     "dotenv": "^16.4.7",
@@ -35,7 +36,9 @@
     "morgan": "~1.9.1",
     "nodemailer": "^6.10.0",
     "path": "^0.12.7",
-    "socket.io": "^4.8.1"
+    "qrcode": "^1.5.4",
+    "socket.io": "^4.8.1",
+    "speakeasy": "^2.0.0"
   },
   "devDependencies": {
     "cypress": "^14.1.0",
