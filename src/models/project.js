@@ -26,7 +26,7 @@ const Project=new Schema({
     },
     ownerID:{
         type: mongoose.Schema.ObjectId,
-        ref: "user"
+        ref: "User"
     },
     team:{
         type: Number,
@@ -44,12 +44,12 @@ const Project=new Schema({
     },
     usersID:[{
         type: mongoose.Schema.ObjectId, 
-        ref : "user", 
+        ref : "User", 
     }],
     tasksID:[{
         type:Array,
           task: mongoose.Schema.ObjectId,
-          ref : "Tasks",
+          ref : "Task",
     }],
 
     archived:{
