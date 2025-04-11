@@ -1,7 +1,7 @@
 const express = require("express");
 const router = express.Router();
-const taskController = require("../controllers/taskController");
-const { validateTask, validateObjectId } = require("../middlewares/validation");
+const taskController = require("../../controllers/Task/taskController");
+const { validateTask, validateObjectId } = require("../../middlewares/validation");
 
 /**
  * @swagger
