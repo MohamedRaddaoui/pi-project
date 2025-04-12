@@ -52,7 +52,7 @@ exports.validateEvent = [
     }),
 
   body("type")
-    .isIn(["Meeting", "Appointment", "Deadline", "Event"])
+    .isIn(["Meeting", "Appointment", "Event"])
     .withMessage("Invalid event type."),
 
   body("reminder")
