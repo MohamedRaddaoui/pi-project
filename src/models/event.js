@@ -42,7 +42,11 @@ const EventSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ["Meeting", "Appointment", "Deadline", "Event"],
+      enum: ["Meeting", "Appointment", "Event"],
+      required: true,
+    },
+    maxAttendees: {
+      type: Number,
       required: true,
     },
     attendees: [
@@ -66,7 +70,7 @@ const EventSchema = new mongoose.Schema(
       trim: true,
     },
     reminder: {
-      type: Date, // Optional field to store reminder notification time
+      type: Date,
     },
     visibility: {
       type: String,
@@ -78,6 +82,18 @@ const EventSchema = new mongoose.Schema(
       enum: ["None", "Daily", "Weekly", "Monthly"],
       default: "None",
     },
+    attachments: [
+      {
+        filename: String,
+        path: String,
+        mimetype: String,
+        originalname: String,
+        uploadedAt: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
   },
   { timestamps: true }
 );
