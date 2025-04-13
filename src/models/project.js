@@ -46,12 +46,6 @@ const Project=new Schema({
         type: mongoose.Schema.ObjectId, 
         ref : "User", 
     }],
-    tasksID:[{
-        type:Array,
-          task: mongoose.Schema.ObjectId,
-          ref : "Task",
-    }],
-
     archived:{
         type:Boolean,
         default:false
@@ -59,4 +53,15 @@ const Project=new Schema({
 
 
 })
+
+// 📌 Add a virtual field to retrieve the associated tasks
+Project.virtual("tasksID", {
+    ref: "Task",
+    localField: "_id",
+    foreignField: "projectId",
+  });
+
+  // 📌 Activation des champs virtuels pour les JSON
+  Project.set("toJSON", { virtuals: true });
+  Project.set("toObject", { virtuals: true });
 module.exports=mongoose.model('project', Project)

@@ -31,5 +31,12 @@ router.get("/getArchProject",projectCtrl.getAllArchivedProject);
 router.get("/getProjectByUser/:id",projectCtrl.getProjectByUser);
 // 📌 Delete tasks selected by Project
 router.delete("/DeleteTaskByProject/:id", projectCtrl.deleteSomeTasksFromProject);
+//
+
+//Calculate progress project 
+router.get("/calculateProgress/:id",projectCtrl.getProjectProgress)
+//summury of task
+router.get("/sumTask/:id",projectCtrl.getProjectTaskSummary)
+router.get('/search',projectCtrl.searchProjects)
 
 module.exports = router;
