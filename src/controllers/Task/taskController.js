@@ -1,6 +1,5 @@
-const Task = require("../models/task");
-const { updateProjectStatus } = require("./projectController");
-
+const Task = require("../../models/Task/task");
+const { updateProjectStatus } = require("../projectController");
 
 // 📌 Create a Task
 exports.createTask = async (req, res) => {
