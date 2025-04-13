@@ -25,8 +25,8 @@ const Project=new Schema({
         required:true,
     },
     ownerID:{
-        //type: mongoose.Schema.ObjectId,
-        //ref: User
+        type: mongoose.Schema.ObjectId,
+        ref: "User"
     },
     team:{
         type: Number,
@@ -35,25 +35,33 @@ const Project=new Schema({
     status:{
         type: String,
         trim: true,
-        enum: ["Not Started","In Progress", "Done", "Canceled"],
-        default: "Not Started",
-
+        enum: ['Not Started','In Progress', 'Done', 'Canceled'],
+        default: 'Not Started',
     },
     category:{
         type:String,
         required: true
     },
     usersID:[{
-        type:Array,
-        user: mongoose.Schema.ObjectId, 
+        type: mongoose.Schema.ObjectId, 
         ref : "User", 
     }],
-    tasksID:[{
-        type:Array,
-          task: mongoose.Schema.ObjectId,
-          ref : "Tasks",
-    }]
+    archived:{
+        type:Boolean,
+        default:false
+    }
 
 
-});
-module.exports=mongoose.model("Project", Project);
+})
+
+// 📌 Add a virtual field to retrieve the associated tasks
+Project.virtual("tasksID", {
+    ref: "Task",
+    localField: "_id",
+    foreignField: "projectId",
+  });
+
+  // 📌 Activation des champs virtuels pour les JSON
+  Project.set("toJSON", { virtuals: true });
+  Project.set("toObject", { virtuals: true });
+module.exports=mongoose.model('project', Project)

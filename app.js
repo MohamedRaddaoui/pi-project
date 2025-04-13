@@ -4,6 +4,10 @@ var cookieParser = require("cookie-parser");
 var logger = require("morgan");
 require("dotenv").config();
 const setupSwagger = require("./swagger");
+
+// Importation des tâches cron
+require('./cron/deadlineReminderJob'); // Assure-toi que le chemin est correct
+
 // Use the base URL from the .env file for all routes
 const baseUrl = process.env.BASE_URL || "/api"; // Default to '/api' if not specified
 
@@ -21,5 +25,6 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
 app.use(baseUrl + "/", indexRouter);
 setupSwagger(app); // Setup Swagger
+
 
 module.exports = app;
