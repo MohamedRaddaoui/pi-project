@@ -1,12 +1,22 @@
 const TaskComment = require("../../models/Task/taskComment");
 const Task = require("../../models/Task/task");
+const { checkComment } = require("../../../utils/badWordFilter");
 
 exports.addComment = async (req, res) => {
   try {
     const { taskId, userId, text } = req.body;
-    const files = req.files;  // Récupération des fichiers envoyés dans le corps de la requête
+    const files = req.files;
 
-     let attachments = [];
+    const { isFlagged } = await checkComment(text);
+
+    // Vérifier si la tâche existe
+    const task = await Task.findById(taskId);
+    if (!task) {
+      return res.status(404).json({ error: "Task not found" });
+    }
+
+    // Construire les attachments
+    let attachments = [];
     if (files && files.length > 0) {
       attachments = files.map(file => ({
         filename: file.originalname,
@@ -14,35 +24,53 @@ exports.addComment = async (req, res) => {
         data: file.buffer
       }));
     }
-    // Vérifier si la tâche existe
-    const task = await Task.findById(taskId);
-    if (!task) {
-      return res.status(404).json({ error: "Task not found" });
-    }
 
     // Créer le commentaire
-    const comment = new TaskComment({ task: taskId, user: userId, text, attachments });
+    const comment = new TaskComment({
+      task: taskId,
+      user: userId,
+      text,
+      attachments,
+      isFlagged
+    });
+
     await comment.save();
 
-    // Ajouter le commentaire à la tâche
-    task.comments.push({ user: userId, text, attachments: comment.attachments.map(att => att._id) });
+    // Ajouter l'ID du commentaire à la tâche
+    task.comments.push(comment._id);
     await task.save();
 
-    res.status(201).json({ message: "Comment added successfully", comment });
+    res.status(201).json({
+      message: isFlagged
+        ? "Commentaire ajouté, mais signalé comme inapproprié"
+        : "Commentaire ajouté avec succès",
+      comment
+    });
+
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
 };
-
 //  Supprimer un commentaire
 exports.deleteComment = async (req, res) => {
   try {
     const { commentId, taskId } = req.params;
 
-    await Comment.findByIdAndDelete(commentId);
-    await Task.findByIdAndUpdate(taskId, { $pull: { comments: commentId } });
+    const comment = await TaskComment.findById(commentId);
+    if (!comment) {
+      return res.status(404).json({ message: "Comment not found" });
+    }
+
+    // Supprimer le commentaire
+    await TaskComment.findByIdAndDelete(commentId);
+
+    // Supprimer la référence dans la tâche
+    await Task.findByIdAndUpdate(taskId, {
+      $pull: { comments: commentId }
+    });
 
     res.status(200).json({ message: "Comment deleted successfully" });
+
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

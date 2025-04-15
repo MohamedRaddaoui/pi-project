@@ -1,5 +1,6 @@
 const Task = require("../../models/Task/task");
 const { updateProjectStatus } = require("../projectController");
+const mongoose = require("mongoose");
 
 // 📌 Create a Task
 exports.createTask = async (req, res) => {
@@ -77,3 +78,57 @@ exports.deleteTask = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+// 📌 Filtered Search for Tasks
+exports.filterTasks = async (req, res) => {
+  try {
+    const matchStage = {};
+
+    // Appliquer les filtres de base
+    if (req.query.assignedUser) {
+      matchStage.assignedUser = new mongoose.Types.ObjectId(req.query.assignedUser);
+    }
+    if (req.query.status) {
+      matchStage.status = req.query.status;
+    }
+    if (req.query.priority) {
+      matchStage.priority = req.query.priority;
+    }
+    if (req.query.dueDate) {
+      matchStage.dueDate = { $lte: new Date(req.query.dueDate) };
+    }
+
+    const pipeline = [
+      {
+        $lookup: {
+          from: "taskcomments", // attention au nom de la collection en base (en minuscule/pluriel)
+          localField: "comments",
+          foreignField: "_id",
+          as: "comments",
+        },
+      },
+      {
+        $match: matchStage,
+      }
+    ];
+
+    // Ajouter le filtre pour les commentaires inappropriés si demandé
+    if (req.query.inappropriateComments === "true") {
+      pipeline.push({
+        $match: {
+          "comments.isFlagged": true,
+        },
+      });
+    }
+
+    const tasks = await Task.aggregate(pipeline);
+
+    if (!tasks || tasks.length === 0) {
+      return res.status(404).json({ message: "Aucune tâche trouvée." });
+    }
+
+    res.status(200).json({ tasks });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
