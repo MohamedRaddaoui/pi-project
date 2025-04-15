@@ -2,7 +2,7 @@ let Filter;
 
 async function loadFilter() {
   if (!Filter) {
-    const module = await import('bad-words');
+    const module = await import("bad-words");
     Filter = module.Filter || module.default; // 🛠️ selon ce que le module exporte
   }
 

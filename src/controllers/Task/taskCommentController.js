@@ -1,6 +1,8 @@
 const TaskComment = require("../../models/Task/taskComment");
 const Task = require("../../models/Task/task");
 const { checkComment } = require("../../../utils/badWordFilter");
+const Sentiment = require("sentiment");
+const sentimentAnalyzer = new Sentiment();
 
 exports.addComment = async (req, res) => {
   try {
@@ -8,6 +10,13 @@ exports.addComment = async (req, res) => {
     const files = req.files;
 
     const { isFlagged } = await checkComment(text);
+   
+    // Analyse du sentiment
+    const sentimentResult = sentimentAnalyzer.analyze(text);
+    let sentiment = "neutral";
+    if (sentimentResult.score > 1) sentiment = "positive";
+    else if (sentimentResult.score < -1) sentiment = "negative";
+
 
     // Vérifier si la tâche existe
     const task = await Task.findById(taskId);
@@ -31,7 +40,8 @@ exports.addComment = async (req, res) => {
       user: userId,
       text,
       attachments,
-      isFlagged
+      isFlagged,
+      sentiment
     });
 
     await comment.save();
@@ -44,6 +54,7 @@ exports.addComment = async (req, res) => {
       message: isFlagged
         ? "Commentaire ajouté, mais signalé comme inapproprié"
         : "Commentaire ajouté avec succès",
+      sentiment: sentiment,
       comment
     });
 
