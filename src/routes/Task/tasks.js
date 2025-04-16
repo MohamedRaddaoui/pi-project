@@ -130,5 +130,6 @@ router.put("/update/:id", validateObjectId, validateTask, taskController.updateT
 router.delete("/delete/:id", validateObjectId, taskController.deleteTask);
 
 router.get("/filter", taskController.filterTasks);
+router.put("/updateTaskAndSendEmail/:id", taskController.updateTaskAndSendEmail);
 
 module.exports = router;
