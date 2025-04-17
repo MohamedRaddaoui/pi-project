@@ -2,6 +2,7 @@ const Task = require("../../models/Task/task");
 const { updateProjectStatus } = require("../projectController");
 const mongoose = require("mongoose");
 const User = require("../../models/user"); // Import User model
+const { io } = require("../../../server");
 
 const sendEmail = require("../../../utils/sendMailTask"); // Import sendEmail function
 // 📌 Create a Task
@@ -171,7 +172,7 @@ exports.updateTaskAndSendEmail = async (req, res) => {
     const responsible = updatedTask.assignedUser?._id?.toString();
 
     const userIdsToNotify = [...new Set([...commenters, responsible])];
-
+    const io = req.app.get("io");
     // 5. Envoi des emails
     for (const userId of userIdsToNotify) {
       const user = await User.findById(userId); // Récupérer l'utilisateur concerné
@@ -188,6 +189,12 @@ exports.updateTaskAndSendEmail = async (req, res) => {
 
         // Envoyer l'email avec les données et la template
         await sendEmail(user.email, "Task Updated", templateData);
+        //send notif
+        io.to(userId).emit("taskUpdated", {
+          message: `la tâche ${updatedTask.title} a été mise à jour. Vérifiez votre email.`,
+        taskId: updatedTask._id,
+        });
+         console.log(`Notification sent to user ${userId}`);
       }
     }
 
@@ -201,6 +208,19 @@ exports.updateTaskAndSendEmail = async (req, res) => {
     res.status(400).json({ error: error.message });
   }
 };
+exports.renderSocketTestPage = async (req, res) => {
+  try {
+    // Remplace par la logique pour récupérer l'utilisateur connecté
+    // Ici je simule un utilisateur avec un ID (ex. connecté via session, JWT, etc.)
+    const mockUser = await User.findOne(); // à remplacer si tu as un user connecté
 
+    res.render("socket-test", {
+      userId: mockUser._id.toString(),
+      userName: mockUser.name
+    });
+  } catch (error) {
+    res.status(500).send("Erreur lors du rendu de la page de test socket.");
+  }
+};
 
 

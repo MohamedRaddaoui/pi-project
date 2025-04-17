@@ -3,6 +3,9 @@ const router = express.Router();
 const taskController = require("../../controllers/Task/taskController");
 const { validateTask, validateObjectId } = require("../../middlewares/validation");
 
+router.get("/socket-test", (req, res) => {
+  res.render("socket-test");
+});
 /**
  * @swagger
  * tags:
@@ -131,5 +134,7 @@ router.delete("/delete/:id", validateObjectId, taskController.deleteTask);
 
 router.get("/filter", taskController.filterTasks);
 router.put("/updateTaskAndSendEmail/:id", taskController.updateTaskAndSendEmail);
+//cette route est pour tester le socket io seulement à ne pas afficher sur le swagger
+router.get("/socket-test", taskController.renderSocketTestPage);
 
 module.exports = router;
