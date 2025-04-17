@@ -3,7 +3,8 @@ const { updateProjectStatus } = require("../projectController");
 const mongoose = require("mongoose");
 const User = require("../../models/user"); // Import User model
 const { io } = require("../../../server");
-
+const TaskHistory = require("../../models/Task/taskHistory");
+const detectChanges = require("../../../utils/detectChanges");
 const sendEmail = require("../../../utils/sendMailTask"); // Import sendEmail function
 // 📌 Create a Task
 exports.createTask = async (req, res) => {
@@ -167,6 +168,16 @@ exports.updateTaskAndSendEmail = async (req, res) => {
       }
     }
 
+    //journaliser les changements dans la collection TaskHistory
+    const detectedChanges = detectChanges(oldTask, updatedTask.toObject());
+console.log("detectChanges", detectChanges);
+    if (Object.keys(detectedChanges).length > 0) {
+      await TaskHistory.create({
+        task: updatedTask._id,
+        updatedBy: "67fef2f193e40a970677e8c5", 
+        changes: detectedChanges,
+      });
+    }
     // 4. Identifier les utilisateurs concernés
     const commenters = updatedTask.comments.map(c => c.user?._id?.toString()).filter(Boolean);
     const responsible = updatedTask.assignedUser?._id?.toString();
@@ -220,6 +231,18 @@ exports.renderSocketTestPage = async (req, res) => {
     });
   } catch (error) {
     res.status(500).send("Erreur lors du rendu de la page de test socket.");
+  }
+};
+
+// 📌 Get a Task by ID
+exports.getTaskHistoryById = async (req, res) => {
+  try {
+    const history = await TaskHistory.find({ task: req.params.taskId })
+      .populate("updatedBy", "name email")
+      .sort({ createdAt: -1 });
+    res.status(200).json(history);
+  } catch (error) {
+    res.status(400).json({ error: error.message });
   }
 };
 
