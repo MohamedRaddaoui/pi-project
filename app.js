@@ -25,6 +25,9 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
 app.use(baseUrl + "/", indexRouter);
 setupSwagger(app); // Setup Swagger
+app.set("view engine", "twig");
 
+// Indiquer le dossier contenant les vues
+app.set("views", path.join(__dirname, "views"));
 
 module.exports = app;
