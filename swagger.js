@@ -5,7 +5,7 @@ const swaggerOptions = {
   definition: {
     openapi: "3.0.0",
     info: {
-      title: "Event and Forum API",
+      title: "Event API",
       version: "1.0.0",
       description:
         "API documentation for managing events and forum comments with authentication",
@@ -18,7 +18,6 @@ const swaggerOptions = {
     ],
     components: {
       schemas: {
-        // Event schema
         Event: {
           type: "object",
           required: [
@@ -367,7 +366,7 @@ const swaggerOptions = {
     },
     security: [{ BearerAuth: [] }],
   },
-  apis: ["./src/routes/*.js"], // Ensure this path matches your routes
+  apis: ["./src/routes/*.js"],
 };
 
 const swaggerSpec = swaggerJsdoc(swaggerOptions);

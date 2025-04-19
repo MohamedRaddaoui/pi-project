@@ -24,7 +24,5 @@ router.use("/taskcomments", taskCommentRoutes);
 // Use forum routes
 router.use("/forum", forumRoutes);
 
-// Use forum routes
-router.use("/forum", forumRoutes);
 
 module.exports = router;
