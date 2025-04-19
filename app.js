@@ -3,11 +3,12 @@ var path = require("path");
 var cookieParser = require("cookie-parser");
 var logger = require("morgan");
 require("dotenv").config();
-
+const setupSwagger = require("./swagger");
 // Use the base URL from the .env file for all routes
 const baseUrl = process.env.BASE_URL || "/api"; // Default to '/api' if not specified
 
 var indexRouter = require("./src/routes/index");
+
 
 var app = express();
 
@@ -19,7 +20,7 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
-
 app.use(baseUrl + "/", indexRouter);
+setupSwagger(app); // Setup Swagger
 
 module.exports = app;
