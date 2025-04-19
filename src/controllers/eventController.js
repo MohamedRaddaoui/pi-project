@@ -114,9 +114,9 @@ exports.participateEvent = async (req, res) => {
       `Hello ${user.firstname},\n\nYou've successfully registered for the event: ${event.name}.\n\nThank you!`
     );
 
-    res
-      .status(200)
-      .json({ message: "Participation successful, confirmation email sent." });
+    res.status(200).json({
+      message: "Participation successful, confirmation email sent.",
+    });
   } catch (error) {
     console.error("Participation Error:", error);
     res.status(500).json({ message: "Internal server error" });
