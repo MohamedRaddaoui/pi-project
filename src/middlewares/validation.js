@@ -52,7 +52,7 @@ exports.validateEvent = [
     }),
 
   body("type")
-    .isIn(["Meeting", "Appointment", "Deadline", "Event"])
+    .isIn(["Meeting", "Appointment", "Event"])
     .withMessage("Invalid event type."),
 
   body("reminder")
@@ -89,6 +89,18 @@ exports.validateTask = [
   body("dueDate").optional().isISO8601().toDate(),
   body("projectId").isMongoId().withMessage("Invalid project ID."),
   body("assignedUser").optional().isMongoId().withMessage("Invalid user ID."),
+  (req, res, next) => {
+    const errors = validationResult(req);
+    if (!errors.isEmpty()) {
+      return res.status(400).json({ errors: errors.array() });
+    }
+    next();
+  },
+];
+exports.validateComment = [
+  body("taskId").isMongoId().withMessage("Invalid task ID."),
+  body("userId").isMongoId().withMessage("Invalid user ID."),
+  body("text").notEmpty().withMessage("Comment text is required.").trim(),
   (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {

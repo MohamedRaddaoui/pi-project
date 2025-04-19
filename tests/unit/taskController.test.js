@@ -1,9 +1,9 @@
 const mongoose = require("mongoose"); // Import Mongoose
 
-const Task = require("../../src/models/task.js"); // Mocked Model
-const taskController = require("../../src/controllers/taskController.js"); // Import the controller
+const Task = require("../../src/models/Task/task.js"); // Mocked Model
+const taskController = require("../../src/controllers/Task/taskController.js"); // Import the controller
 
-jest.mock("../../src/models/task.js"); // Mocking Mongoose Model
+jest.mock("../../src/models/Task/task.js"); // Mocking Mongoose Model
  // Mocking the Express response object
 const mockResponse = () => {
   const res = {};
