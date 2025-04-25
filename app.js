@@ -4,6 +4,7 @@ var cookieParser = require("cookie-parser");
 var logger = require("morgan");
 require("dotenv").config();
 const setupSwagger = require("./swagger");
+const cors = require("cors");
 
 // Importation des tâches cron
 require('./cron/deadlineReminderJob'); // Assure-toi que le chemin est correct
@@ -18,7 +19,7 @@ var app = express();
 
 // view engine setup
 app.set("view engine", "jade");
-
+app.use(cors());
 app.use(logger("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));

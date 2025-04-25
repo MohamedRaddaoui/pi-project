@@ -7,7 +7,8 @@ const swaggerOptions = {
     info: {
       title: "Event API",
       version: "1.0.0",
-      description: "API documentation for managing events with authentication",
+      description:
+        "API documentation for managing events and forum comments with authentication",
     },
     servers: [
       {
@@ -131,6 +132,234 @@ const swaggerOptions = {
             repeat: "None",
             createdAt: "2025-03-11T10:00:00Z",
             updatedAt: "2025-03-11T12:00:00Z",
+          },
+        },
+        // Forum schema
+        Forum: {
+          type: "object",
+          required: ["title", "description", "createdBy", "createdAt"],
+          properties: {
+            id: {
+              type: "string",
+              description: "Auto-generated ID of the forum",
+            },
+            title: {
+              type: "string",
+              description: "Title of the forum",
+            },
+            description: {
+              type: "string",
+              description: "Description of the forum",
+            },
+            createdBy: {
+              type: "string",
+              format: "uuid",
+              description: "User ID of the creator of the forum",
+            },
+            createdAt: {
+              type: "string",
+              format: "date-time",
+              description: "Timestamp when the forum was created",
+            },
+            updatedAt: {
+              type: "string",
+              format: "date-time",
+              description: "Timestamp when the forum was last updated",
+            },
+          },
+          example: {
+            id: "60d21b4667d0d8992e610c90",
+            title: "Project Feedback",
+            description: "A forum for discussing project-related feedback.",
+            createdBy: "60d21b4667d0d8992e610c88",
+            createdAt: "2025-03-15T10:00:00Z",
+            updatedAt: "2025-03-15T12:00:00Z",
+          },
+        },
+        // Comment schema
+        Comment: {
+          type: "object",
+          required: ["user", "text", "forumId", "createdAt"],
+          properties: {
+            id: {
+              type: "string",
+              description: "Auto-generated ID of the comment",
+            },
+            user: {
+              type: "string",
+              description: "User ID who made the comment",
+            },
+            text: {
+              type: "string",
+              description: "The content of the comment",
+            },
+            forumId: {
+              type: "string",
+              description: "ID of the forum to which the comment belongs",
+            },
+            createdAt: {
+              type: "string",
+              format: "date-time",
+              description: "Timestamp when the comment was created",
+            },
+            updatedAt: {
+              type: "string",
+              format: "date-time",
+              description: "Timestamp when the comment was last updated",
+            },
+          },
+          example: {
+            id: "60d21b4667d0d8992e610c91",
+            user: "60d21b4667d0d8992e610c89",
+            text: "This is a comment on the forum topic.",
+            forumId: "60d21b4667d0d8992e610c90",
+            createdAt: "2025-03-15T10:15:00Z",
+            updatedAt: "2025-03-15T10:15:00Z",
+          },
+        },
+        // Reply schema
+        Reply: {
+          type: "object",
+          required: ["user", "text", "createdAt"],
+          properties: {
+            id: {
+              type: "string",
+              description: "Auto-generated ID of the reply",
+            },
+            user: {
+              type: "string",
+              description: "User ID who made the reply",
+            },
+            text: {
+              type: "string",
+              description: "The content of the reply",
+            },
+            createdAt: {
+              type: "string",
+              format: "date-time",
+              description: "Timestamp when the reply was created",
+            },
+            updatedAt: {
+              type: "string",
+              format: "date-time",
+              description: "Timestamp when the reply was last updated",
+            },
+          },
+          example: {
+            id: "60d21b4667d0d8992e610c92",
+            user: "60d21b4667d0d8992e610c89",
+            text: "This is a reply to the comment.",
+            createdAt: "2025-03-15T10:30:00Z",
+            updatedAt: "2025-03-15T10:30:00Z",
+          },
+        },
+        //Task schema
+        Task: {
+          type: "object",
+          required: ["title", "projectId"],
+          properties: {
+            _id: {
+              type: "string",
+              description: "Auto-generated ID of the task",
+            },
+            title: {
+              type: "string",
+              description: "Task title",
+            },
+            description: {
+              type: "string",
+              description: "Task details",
+            },
+            status: {
+              type: "string",
+              enum: ["To Do", "In Progress", "Done"],
+              default: "To Do",
+            },
+            priority: {
+              type: "string",
+              enum: ["Low", "Medium", "High"],
+              default: "Medium",
+            },
+            dueDate: {
+              type: "string",
+              format: "date",
+              description: "Due date of the task",
+            },
+            projectId: {
+              type: "string",
+              description: "Project ID the task belongs to",
+            },
+            assignedUser: {
+              type: "string",
+              description: "ID of the assigned user",
+            },
+            createdAt: {
+              type: "string",
+              format: "date-time",
+            },
+            updatedAt: {
+              type: "string",
+              format: "date-time",
+            },
+          },
+          example: {
+            _id: "60d21b4667d0d8992e610c95",
+            title: "Updated Task Title",
+            description: "This task has been updated with new details.",
+            status: "In Progress",
+            priority: "Medium",
+            dueDate: "2025-03-22",
+            projectId: "65f123456789abcdef123456",
+            assignedUser: "65fabcdef123456789abcdef",
+            createdAt: "2025-03-11T10:00:00Z",
+            updatedAt: "2025-03-15T12:00:00Z",
+          },
+        },
+        // TaskCreate schema (for creating tasks)
+        TaskCreate: {
+          type: "object",
+          required: ["title", "projectId"],
+          properties: {
+            title: {
+              type: "string",
+              description: "Task title",
+            },
+            description: {
+              type: "string",
+              description: "Task details",
+            },
+            status: {
+              type: "string",
+              enum: ["To Do", "In Progress", "Done"],
+              default: "To Do",
+            },
+            priority: {
+              type: "string",
+              enum: ["Low", "Medium", "High"],
+              default: "Medium",
+            },
+            dueDate: {
+              type: "string",
+              format: "date",
+              description: "Due date of the task",
+            },
+            projectId: {
+              type: "string",
+              description: "Project ID the task belongs to",
+            },
+            assignedUser: {
+              type: "string",
+              description: "ID of the assigned user",
+            },
+          },
+          example: {
+            title: "New Task",
+            description: "This is a test task",
+            status: "To Do",
+            priority: "High",
+            dueDate: "2025-03-20",
+            projectId: "65f123456789abcdef123456",
+            assignedUser: "65fabcdef123456789abcdef",
           },
         },
       },
