@@ -1,7 +1,13 @@
 const Event = require("../models/event"); // Import Event model
 const User = require("../models/user"); // Import User model
-
+const { syncEvents } = require("../services/syncEvent");
 const sendEmail = require("../../utils/sendEmail");
+const {
+  getAuthUrl,
+  saveTokens,
+  oauth2Client,
+} = require("../config/googleAuth");
+const { google } = require("googleapis");
 
 // 📌 Create an Event
 exports.createEvent = async (req, res) => {
@@ -17,12 +23,13 @@ exports.createEvent = async (req, res) => {
     const event = new Event({
       ...req.body,
       attachments,
-      createdBy: req.body.userID,
+      createdBy: req.user.userId,
     });
     await event.save();
     res.status(201).json(event);
   } catch (error) {
     res.status(500).json({ message: "Error creating event", error });
+    console.log(error);
   }
 };
 
@@ -93,7 +100,7 @@ exports.deleteEvent = async (req, res) => {
 exports.participateEvent = async (req, res) => {
   try {
     const { eventId } = req.params;
-    const { userId } = req.body;
+    const { userId } = req.user;
 
     const event = await Event.findById(eventId);
     if (!event) return res.status(404).json({ message: "Event not found" });
@@ -101,11 +108,11 @@ exports.participateEvent = async (req, res) => {
     const user = await User.findById(userId);
     if (!user) return res.status(404).json({ message: "User not found" });
 
-    if (event.attendees.includes(user._id)) {
+    if (event.attendees.includes(userId)) {
       return res.status(400).json({ message: "User already participating" });
     }
 
-    event.attendees.push(user._id);
+    event.attendees.push(userId);
     await event.save();
 
     await sendEmail(
@@ -126,7 +133,7 @@ exports.participateEvent = async (req, res) => {
 exports.cancelParticipation = async (req, res) => {
   try {
     const { eventId } = req.params;
-    const { userId } = req.body;
+    const { userId } = req.user;
 
     const event = await Event.findById(eventId);
     if (!event) {
@@ -163,5 +170,65 @@ exports.cancelParticipation = async (req, res) => {
   } catch (error) {
     console.error("Cancel Participation Error:", error);
     res.status(500).json({ message: "Server error" });
+  }
+};
+
+exports.syncEvents = async (req, res) => {
+  try {
+    const userId = req.user.userId;
+
+    const user = await User.findById(userId);
+    if (
+      !user ||
+      !user.googleTokens ||
+      !user.googleTokens.access_token ||
+      !user.googleTokens.refresh_token
+    ) {
+      // If the user doesn't have Google tokens, redirect to Google OAuth
+      const googleAuthURL = getAuthUrl();
+      return res.json({ googleAuthURL: googleAuthURL }); // Redirect to Google's OAuth consent page
+    } else {
+      await syncEvents(user);
+      res.status(200).json({ message: "Events synced successfully" });
+    }
+  } catch (error) {
+    console.error("Sync Error:", error);
+    res
+      .status(500)
+      .json({ message: "An error occurred while syncing events." });
+  }
+};
+exports.handleCallBack = async (req, res) => {
+  const { code } = req.query;
+
+  if (!code) {
+    return res.status(400).send("Missing authorization code");
+  }
+
+  try {
+    const { tokens } = await oauth2Client.getToken(code);
+    oauth2Client.setCredentials(tokens);
+
+    const oauth2 = google.oauth2({ version: "v2", auth: oauth2Client });
+    const userInfo = await oauth2.userinfo.v2.me.get();
+
+    const user = await User.findOne({ email: userInfo.data.email });
+
+    if (!user) {
+      return res.status(404).send("User not found");
+    }
+
+    let userUpdated = await User.findOneAndUpdate(
+      { _id: user._id },
+      { googleTokens: tokens },
+      { new: true, upsert: true }
+    );
+
+    await syncEvents(userUpdated);
+
+    res.status(200).json({ message: "Events synced successfully" });
+  } catch (error) {
+    console.error("Error during OAuth2 callback:", error);
+    res.status(500).send("Error during Google authentication");
   }
 };
