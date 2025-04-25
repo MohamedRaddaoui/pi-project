@@ -8,9 +8,9 @@ const transporter = nodemailer.createTransport({
   },
 });
 
-const sendEmail = async (to, subject, html) => {
+const sendEmail = async (to, subject, html, attachements = []) => {
   const mailOptions = {
-    from: `"Event Organizer" <${process.env.EMAIL_USER}>`,
+    from: `"Support App" <${process.env.EMAIL_USER}>`,
     to,
     subject,
     html,
