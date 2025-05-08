@@ -24,10 +24,12 @@ exports.createTask = async (req, res) => {
 // 📌 Get all Tasks
 exports.getAllTasks = async (req, res) => {
   try {
-    const tasks = await Task.find();
-    res.status(200).json({tasks});
-  } catch (error) {
-    res.status(500).json({ error: error.message });
+    const tasks = await Task.find()
+      .populate("assignedUser", "firstname") 
+      .populate("projectId", "projectId");   
+    res.status(200).json({ tasks });
+  } catch (err) {
+    res.status(500).json({ message: "Erreur serveur", error: err });
   }
 };
 
@@ -186,7 +188,7 @@ console.log("detectChanges", detectChanges);
     const io = req.app.get("io");
     // 5. Envoi des emails
     for (const userId of userIdsToNotify) {
-      const user = await User.findById(userId); // Récupérer l'utilisateur concerné
+      const user = await User.findById(userId); // Récupérer l"utilisateur concerné
       if (user) {
         // Préparer les données pour le template
         const templateData = {
@@ -198,7 +200,7 @@ console.log("detectChanges", detectChanges);
           changes: JSON.stringify(changes, null, 2), // Afficher les changements de manière lisible
         };
 
-        // Envoyer l'email avec les données et la template
+        // Envoyer l"email avec les données et la template
         await sendEmail(user.email, "Task Updated", templateData);
         //send notif
         io.to(userId).emit("taskUpdated", {
@@ -221,7 +223,7 @@ console.log("detectChanges", detectChanges);
 };
 exports.renderSocketTestPage = async (req, res) => {
   try {
-    // Remplace par la logique pour récupérer l'utilisateur connecté
+    // Remplace par la logique pour récupérer l"utilisateur connecté
     // Ici je simule un utilisateur avec un ID (ex. connecté via session, JWT, etc.)
     const mockUser = await User.findOne(); // à remplacer si tu as un user connecté
 
