@@ -4,7 +4,6 @@ const { syncEvents } = require("../services/syncEvent");
 const sendEmail = require("../../utils/sendEmail");
 const {
   getAuthUrl,
-  saveTokens,
   oauth2Client,
 } = require("../config/googleAuth");
 const { google } = require("googleapis");
@@ -19,7 +18,6 @@ exports.createEvent = async (req, res) => {
         mimetype: file.mimetype,
         originalname: file.originalname,
       })) || [];
-
     const event = new Event({
       ...req.body,
       attachments,
@@ -176,7 +174,6 @@ exports.cancelParticipation = async (req, res) => {
 exports.syncEvents = async (req, res) => {
   try {
     const userId = req.user.userId;
-
     const user = await User.findById(userId);
     if (
       !user ||
@@ -188,16 +185,61 @@ exports.syncEvents = async (req, res) => {
       const googleAuthURL = getAuthUrl();
       return res.json({ googleAuthURL: googleAuthURL }); // Redirect to Google's OAuth consent page
     } else {
+      oauth2Client.setCredentials({
+        access_token: user.googleTokens.access_token,
+        refresh_token: user.googleTokens.refresh_token,
+        expiry_date: user.googleTokens.expiry_date,
+      });
+
+      // Refresh token if access token is expired
+      try {
+        const tokens = await oauth2Client.getAccessToken();
+        if (tokens?.token && tokens?.res?.data) {
+          const updatedTokens = tokens.res.data;
+
+          // Save the refreshed tokens to DB
+          await User.findByIdAndUpdate(user._id, {
+            googleTokens: updatedTokens,
+          });
+        }
+      } catch (error) {
+        if (error.response?.data?.error == "invalid_grant") {
+          const googleAuthURL = getAuthUrl();
+          return res.status(401).json({
+            message: "Google access has expired. Please reauthorize.",
+            googleAuthURL,
+          });
+        }
+
+        return res.status(500).json({
+          message: error.message,
+        });
+      }
       await syncEvents(user);
       res.status(200).json({ message: "Events synced successfully" });
     }
   } catch (error) {
-    console.error("Sync Error:", error);
-    res
-      .status(500)
-      .json({ message: "An error occurred while syncing events." });
+    console.error("Token refresh failed:", error);
   }
 };
+
+exports.getUserEvents = async (req, res) => {
+  try {
+    const userId = req.params.userId;
+
+    const events = await Event.find({
+      $or: [{ createdBy: userId }, { attendees: { $in: [userId] } }],
+    }).populate("attendees createdBy");
+
+    res.status(200).json(events);
+  } catch (error) {
+    res.status(500).json({
+      message: "Error fetching user events",
+      error: error.message,
+    });
+  }
+};
+
 exports.handleCallBack = async (req, res) => {
   const { code } = req.query;
 

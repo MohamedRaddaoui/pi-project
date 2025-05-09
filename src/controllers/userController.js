@@ -10,13 +10,13 @@ dotenv.config();
 
 async function adduser(req, res) {
   try {
-    const { firstname, lastname, email, password, role } = req.body;
+    let { firstname, lastname, email, password, role } = req.body;
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res.status(400).json({ error: "Email déjà utilisé" });
+      return res.status(409).json({ message: "Email déjà utilisé" });
     }
-
+    role = "user";
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = new User({
       firstname,
@@ -165,7 +165,7 @@ async function verify2FA(req, res) {
     const token = jwt.sign(
       { userId: user._id, email: user.email, role: user.role },
       process.env.JWT_SECRET,
-      { expiresIn: "1000h" }
+      { expiresIn: "24h" }
     );
 
     res.status(200).json({
@@ -196,7 +196,7 @@ const forgotPassword = async (req, res) => {
       expiresIn: "15m",
     });
 
-    const resetLink = `http://localhost:5000/api/users/reset-password/${token}`;
+    const resetLink = `http://localhost:4200/reset-password/${token}`;
     await sendEmail(
       email,
       "Réinitialisation de mot de passe",

@@ -299,4 +299,6 @@ router.post("/sync", auth, eventController.syncEvents);
 // handle Google Calendar CallBack
 router.get("/oauth2callback", eventController.handleCallBack);
 
+router.get('/user/:userId', auth, eventController.getUserEvents);
+
 module.exports = router;

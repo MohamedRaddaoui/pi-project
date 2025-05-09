@@ -18,13 +18,13 @@ async function getGoogleCalendarService(user) {
 // Sync events
 async function syncEvents(user) {
   const calendar = await getGoogleCalendarService(user);
-  const userEvents = await Event.find({ createdBy: user._id }); // Get events from your DB
-
+  const userEvents = await Event.find({ createdBy: user._id });
+  console.log(userEvents);
   for (const event of userEvents) {
     const googleEvent = {
       summary: event.title,
-      description: event.description,
-      location: event.location,
+      description: event.description || "",
+      location: event.location || "",
       start: {
         dateTime: event.startTime,
         timeZone: "UTC",
@@ -34,9 +34,9 @@ async function syncEvents(user) {
         timeZone: "UTC",
       },
       attendees: event.attendees.map((attendee) => ({
-        email: attendee.email, // Assuming attendees have an email
+        email: attendee.email,
       })),
-      visibility: event.visibility.toLowerCase(), // Public or Private
+      visibility: event.visibility.toLowerCase(),
     };
     try {
       // Create or update the event in Google Calendar
