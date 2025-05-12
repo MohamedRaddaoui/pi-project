@@ -1,12 +1,12 @@
 var express = require("express");
 var router = express.Router();
-const userController = require('../controllers/userController');
-const auth = require('../middlewares/auth');
+const userController = require("../controllers/userController");
+const auth = require("../middlewares/auth");
 
 /* CRUD */
 router.post("/adduser", userController.adduser);
-router.get("/showuser", auth,userController.showuser);              // Obtenir tous les utilisateurs
-router.get("/showById/:id", userController.showById);          // Obtenir un utilisateur spécifique par ID
+router.get("/showuser", auth, userController.showuser); // Obtenir tous les utilisateurs
+router.get("/showById/:id", userController.showById); // Obtenir un utilisateur spécifique par ID
 router.delete("/deleteuser/:id", userController.deleteuser);
 router.put("/updateuser/:id", userController.updateuser);
 

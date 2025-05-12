@@ -3,27 +3,20 @@ const jwt = require("jsonwebtoken");
 const User = require("../models/user");
 const nodemailer = require("nodemailer");
 const dotenv = require("dotenv");
-const Blacklist = require('../models/blacklist');
+const Blacklist = require("../models/blacklist");
+const sendEmail = require("../../utils/sendEmail");
 
 dotenv.config();
 
-const transporter = nodemailer.createTransport({
-  service: "gmail",
-  auth: {
-    user: process.env.EMAIL_FROM,
-    pass: process.env.EMAIL_PASSWORD,
-  },
-});
-
 async function adduser(req, res) {
   try {
-    const { firstname, lastname, email, password, role } = req.body;
+    let { firstname, lastname, email, password, role } = req.body;
 
     const existingUser = await User.findOne({ email });
     if (existingUser) {
-      return res.status(400).json({ error: "Email déjà utilisé" });
+      return res.status(409).json({ message: "Email déjà utilisé" });
     }
-
+    role = "user";
     const hashedPassword = await bcrypt.hash(password, 10);
     const user = new User({
       firstname,
@@ -123,12 +116,11 @@ async function login(req, res) {
 
     // Envoi du code 2FA par email
     try {
-      await transporter.sendMail({
-        from: process.env.EMAIL_FROM,
-        to: user.email,
-        subject: "Code de vérification 2FA",
-        text: `Voici votre code de vérification : ${code} (valide 10 minutes).`,
-      });
+      await sendEmail(
+        user.email,
+        "Code de vérification 2FA",
+        `Voici votre code de vérification : ${code} (valide 10 minutes).`
+      );
       res.status(200).json({
         message: "Code 2FA envoyé par email",
         email: user.email,
@@ -137,9 +129,8 @@ async function login(req, res) {
       console.log("Erreur lors de l'envoi de l'email:", emailError);
       return res.status(500).json({ error: "Erreur d'envoi de l'email" });
     }
-
   } catch (err) {
-    console.log('Erreur dans la fonction login:', err);
+    console.log("Erreur dans la fonction login:", err);
     res.status(500).json({ error: "Erreur serveur" });
   }
 }
@@ -151,7 +142,9 @@ async function verify2FA(req, res) {
     const user = await User.findOne({ email });
 
     if (!user || !user.twoFACode || !user.twoFACodeExpires) {
-      return res.status(400).json({ error: "Code non généré ou utilisateur introuvable" });
+      return res
+        .status(400)
+        .json({ error: "Code non généré ou utilisateur introuvable" });
     }
 
     if (user.twoFACode !== code) {
@@ -172,22 +165,21 @@ async function verify2FA(req, res) {
     const token = jwt.sign(
       { userId: user._id, email: user.email, role: user.role },
       process.env.JWT_SECRET,
-      { expiresIn: "1000h" }
+      { expiresIn: "24h" }
     );
 
     res.status(200).json({
       message: "Connexion réussie",
       token,
     });
-
   } catch (err) {
     res.status(500).json({ error: "Erreur serveur" });
   }
 }
 
 const logout = (req, res) => {
-  res.clearCookie('token');  // Efface le cookie contenant le token
-  return res.status(200).json({ message: 'Déconnexion réussie' });
+  res.clearCookie("token"); // Efface le cookie contenant le token
+  return res.status(200).json({ message: "Déconnexion réussie" });
 };
 
 // Réinitialisation de mot de passe
@@ -204,19 +196,17 @@ const forgotPassword = async (req, res) => {
       expiresIn: "15m",
     });
 
-    const resetLink = `http://localhost:5000/api/users/reset-password/${token}`;
-
-    await transporter.sendMail({
-      from: `"Support App" <${process.env.EMAIL_FROM}>`,
-      to: email,
-      subject: "Réinitialisation de mot de passe",
-      html: `
+    const resetLink = `http://localhost:4200/reset-password/${token}`;
+    await sendEmail(
+      email,
+      "Réinitialisation de mot de passe",
+      `
         <p>Bonjour,</p>
         <p>Cliquez sur le lien ci-dessous pour réinitialiser votre mot de passe :</p>
         <a href="${resetLink}">${resetLink}</a>
         <p><strong>Ce lien expirera dans 15 minutes.</strong></p>
-      `,
-    });
+      `
+    );
 
     res.json({ message: "Email de réinitialisation envoyé !" });
   } catch (err) {
@@ -243,7 +233,6 @@ const resetPassword = async (req, res) => {
     res.status(400).json({ message: "Token invalide ou expiré" });
   }
 };
-
 
 module.exports = {
   adduser,
