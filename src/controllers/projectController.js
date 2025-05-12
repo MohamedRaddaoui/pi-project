@@ -1,6 +1,5 @@
 const Project = require("../models/project");
 const Task = require("../models/Task/task");
-const User = require("../models/user");
 
 
 // 📌 Create new Project
@@ -8,6 +7,7 @@ async function createProject(req, res){
     try{
         
         const project = new Project (req.body);
+        console.log(req.body) 
         await project.save();
          res.status(201).json({message:"Project created successfully", project:project});
          
@@ -17,15 +17,53 @@ async function createProject(req, res){
 }
 
 // 📌 Get all Projects
-async function getAllProject(req,res){
-    try {
-        const project = await Project.find({archived:false}).select("title descriptio category status startDate endDate");
-        res.status(200).json(project);
-    }catch (err){
-        res.status(500).json({error: err.message });
-    }
+// async function getAllProject(req,res){
+//     try {
+//         const project = await Project.find({archived:false}).select("title description category status startDate endDate type");
+        
+//         res.status(200).json(project);
+//     }catch (err){
+//         res.status(500).json({error: err.message });
+//     }
 
-}
+// }
+
+async function getAllProject(req, res) {
+    try {
+      // Étape 1 : Récupération initiale
+      const projects = await Project.find({ archived: false }).select("title description category status startDate endDate type");
+  
+      if (!projects || projects.length === 0) {
+        return res.status(404).json({ message: "No projects found" });
+      }
+  
+      // Étape 2 : Mise à jour des statuts
+      await Promise.all(projects.map(project => updateProjectStatus(project._id)));
+  
+      // Étape 3 : Re-fetch avec statuts mis à jour
+      const updatedProjects = await Project.find({ archived: false }).select("title description category status startDate endDate type");
+  
+      // Étape 4 : Tri par date de fin la plus proche d’aujourd’hui
+      const today = new Date();
+  
+      updatedProjects.sort((a, b) => {
+        const dateA = new Date(a.endDate);
+        const dateB = new Date(b.endDate);
+  
+        // On favorise les dates futures (proches de today), mais autorise les dates passées à la fin
+        const diffA = dateA - today >= 0 ? dateA - today : Infinity;
+        const diffB = dateB - today >= 0 ? dateB - today : Infinity;
+  
+        return diffA - diffB;
+      });
+  
+      // Étape 5 : Réponse
+      res.status(200).json(updatedProjects);
+    } catch (err) {
+      res.status(500).json({ error: err.message });
+    }
+  }
+  
 
 // 📌 Get Project by ID
 async function getProjectByID(req,res){
@@ -76,27 +114,6 @@ async function deleteProjectAndTasks (req, res) {
     }
   
   }
-
-// 📌 Assign Member to Project
-// async function assignUserToProject(req, res) {
-//     try {
-//         const { projectId, userId } = req.body;
-//         const project = await Project.findById(projectId);
-//         if (!project) return res.status(404).json({ message: "Project not found" });
-
-//         if (!project.usersID.includes(userId)) {
-//             project.usersID.push(userId);
-//             project.team=+1;
-//             await project.save();
-//             return res.status(200).json({ message: "Member added successfully", project });
-//         }
-
-//         res.status(400).json({ message: "Member already in the project" });
-//     } catch (error) {
-//         res.status(500).json({ error: error.message });
-//     }
-// }
-
 
 async function assignUserToProject(req, res) {
     try {
@@ -230,29 +247,72 @@ async function restoreProject(req, res) {
 
 
 // 📌 Update  status Project 
+
 const updateProjectStatus = async (projectId) => {
     try {
-      // get all tasks assigned to project 
-      const tasks = await Task.find({ projectId: projectId })
-
-    let newStatus = "Not Started"; // dafault status
-
-    if (tasks.length > 0) {
+      const project = await Project.findById(projectId);
+      if (!project) {
+        console.error("Project not found.");
+        return;
+      }
+  
+      // get all tasks assigned to project
+      const tasks = await Task.find({ projectId: projectId });
+  
+      let newStatus = "Not Started"; // default status
+  
+      if (tasks.length > 0) {
         const hasInProgressTask = tasks.some((task) => task.status === "In Progress");
         const allTasksCompleted = tasks.every((task) => task.status === "Done");
-
+  
         if (hasInProgressTask) newStatus = "In Progress";
         if (allTasksCompleted) newStatus = "Done";
+      }
+  
+      // Si pas "Done" ou "Canceled", on vérifie si la date est dépassée
+      const today = new Date();
+      const endDate = new Date(project.endDate);
+  
+      if (newStatus !== "Done" && newStatus !== "Canceled" && today > endDate) {
+        newStatus = "Overdue";
+      }
+  
+      // update project status only if changed
+      if (project.status !== newStatus) {
+        await Project.findByIdAndUpdate(projectId, { status: newStatus });
+        console.log(`Project ${projectId} updated to ${newStatus}`);
+      } else {
+        console.log(`Project ${projectId} status unchanged (${newStatus})`);
+      }
+  
+    } catch (error) {
+      console.error("Error updating project status:", error);
     }
-
-    // update project status
-    await Project.findByIdAndUpdate(projectId, { status: newStatus });
-
-    console.log(` Project ${projectId} updated to ${newStatus}`);
-} catch (error) {
-    console.error(" Error updating project status:", error);
-}
   };
+  
+// const updateProjectStatus = async (projectId) => {
+//     try {
+//       // get all tasks assigned to project 
+//       const tasks = await Task.find({ projectId: projectId })
+
+//     let newStatus = "Not Started"; // dafault status
+
+//     if (tasks.length > 0) {
+//         const hasInProgressTask = tasks.some((task) => task.status === "In Progress");
+//         const allTasksCompleted = tasks.every((task) => task.status === "Done");
+
+//         if (hasInProgressTask) newStatus = "In Progress";
+//         if (allTasksCompleted) newStatus = "Done";
+//     }
+
+//     // update project status
+//     await Project.findByIdAndUpdate(projectId, { status: newStatus });
+
+//     console.log(` Project ${projectId} updated to ${newStatus}`);
+// } catch (error) {
+//     console.error(" Error updating project status:", error);
+// }
+//   };
   
   async function deleteSomeTasksFromProject (req, res) {
     try {
@@ -318,10 +378,10 @@ async function checkProjectOverdue(req, res) {
         const currentDate = new Date();
         const endDate = new Date(project.endDate);
 
-        if (currentDate > endDate) {
-            res.status(200).json({ message: "Project is overdue" });
+        if (currentDate > endDate && project.status == 'In Progress') {
+            res.status(200).json({ message: "Project is overdue" ,project: project});
         } else {
-            res.status(200).json({ message: "Project is not overdue" });
+            res.status(200).json({ message: "Project is not overdue" ,project: project});
         }
     } catch (err) {
         res.status(500).json({ error: err.message });

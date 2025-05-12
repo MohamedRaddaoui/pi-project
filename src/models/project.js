@@ -12,7 +12,7 @@ const Project=new Schema({
 
     description:{
         type:String,
-        minlength: 200,
+        minlength: 30,
         trim:true,
         required:true,
     },
@@ -35,12 +35,13 @@ const Project=new Schema({
     status:{
         type: String,
         trim: true,
-        enum: ['Not Started','In Progress', 'Done', 'Canceled'],
+        enum: ['Not Started','In Progress', 'Done', 'Canceled','Overdue'],
         default: 'Not Started',
     },
     category:{
         type:String,
-        required: true
+        required: true,
+        default:'dev'
     },
     usersID:[{
         type: mongoose.Schema.ObjectId, 
@@ -49,6 +50,16 @@ const Project=new Schema({
     archived:{
         type:Boolean,
         default:false
+    },
+    summarySent: 
+    { type: Boolean, 
+    default: false },
+
+    type:{
+        type:String,
+        trim: true,
+        enum: ['Kanban','Scrum'],
+        default:'Kanban'
     }
 
 
