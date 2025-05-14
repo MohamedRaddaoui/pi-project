@@ -57,6 +57,6 @@
     "mochawesome-merge": "^5.0.0",
     "mochawesome-report-generator": "^6.2.0",
     "nodemon": "^3.1.9",
-    "supertest": "^6.3.3"
+    "supertest": "^7.0.0"
   }
 }

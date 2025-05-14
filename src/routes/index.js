@@ -2,9 +2,10 @@ const express = require("express");
 const eventRoutes = require("./events");
 const userRoutes = require("./users");
 const projectRoutes = require("./project");
-const taskRoutes = require("./Task/tasks");
 const taskCommentRoutes = require("./Task/taskComment");
 const qaRoutes = require("./qa.routes");
+const taskRoutes = require("./tasks");
+const forumRoutes = require("./forums");
 
 const router = express.Router();
 
@@ -23,5 +24,11 @@ router.use("/taskcomments", taskCommentRoutes);
 
 // Use Q&A routes
 router.use("/qa", qaRoutes);
+
+// Use forum routes
+router.use("/forum", forumRoutes);
+
+// Use forum routes
+router.use("/forum", forumRoutes);
 
 module.exports = router;
