@@ -4,7 +4,7 @@ const userRoutes = require("./users");
 const projectRoutes = require("./project");
 const taskCommentRoutes = require("./Task/taskComment");
 const qaRoutes = require("./qa.routes");
-const taskRoutes = require("./tasks");
+const taskRoutes = require("./Task/tasks");
 const forumRoutes = require("./forums");
 
 const router = express.Router();

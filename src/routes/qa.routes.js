@@ -1,38 +1,16 @@
 const express = require("express");
 const router = express.Router();
-const swaggerUi = require("swagger-ui-express");
-const swaggerJsdoc = require("swagger-jsdoc");
 const qaController = require("../controllers/qaController");
 const qaSearchController = require("../controllers/qaSearch.controller");
 const sentimentController = require("../controllers/sentimentAnalysis.controller");
-const { 
-  validateQuestion, 
-  validateAnswer, 
-  validateReply, 
+const {
+  validateQuestion,
+  validateAnswer,
+  validateReply,
   validateVote,
   validateSearch,
-  validateObjectId 
+  validateObjectId,
 } = require("../middlewares/qaValidation");
-
-const swaggerOptions = {
-  definition: {
-    openapi: "3.0.0",
-    info: {
-      title: "Q&A API Documentation",
-      version: "1.0.0",
-      description: "API documentation for the Q&A system"
-    },
-    servers: [
-      {
-        url: "/api"
-      }
-    ]
-  },
-  apis: ["./src/routes/qa.routes.js"]
-};
-
-const swaggerDocs = swaggerJsdoc(swaggerOptions);
-router.use("/docs", swaggerUi.serve, swaggerUi.setup(swaggerDocs));
 
 /**
  * @swagger
@@ -208,7 +186,11 @@ router.get("/questions/:questionId", qaController.getQuestionById);
  *       404:
  *         description: Question not found
  */
-router.put("/questions/:questionId", [validateObjectId, validateQuestion], qaController.updateQuestion);
+router.put(
+  "/questions/:questionId",
+  [validateObjectId, validateQuestion],
+  qaController.updateQuestion
+);
 
 /**
  * @swagger
@@ -263,7 +245,11 @@ router.delete("/questions/:questionId", qaController.deleteQuestion);
  *       404:
  *         description: Question not found
  */
-router.post("/questions/:questionId/vote", [validateObjectId, validateVote], qaController.voteQuestion);
+router.post(
+  "/questions/:questionId/vote",
+  [validateObjectId, validateVote],
+  qaController.voteQuestion
+);
 
 /**
  * @swagger
@@ -289,7 +275,11 @@ router.post("/questions/:questionId/vote", [validateObjectId, validateVote], qaC
  *       404:
  *         description: Question not found
  */
-router.post("/questions/:questionId/answers", [validateObjectId, validateAnswer], qaController.createAnswer);
+router.post(
+  "/questions/:questionId/answers",
+  [validateObjectId, validateAnswer],
+  qaController.createAnswer
+);
 
 /**
  * @swagger
@@ -315,7 +305,11 @@ router.post("/questions/:questionId/answers", [validateObjectId, validateAnswer]
  *       404:
  *         description: Answer not found
  */
-router.put("/answers/:answerId", [validateObjectId, validateAnswer], qaController.updateAnswer);
+router.put(
+  "/answers/:answerId",
+  [validateObjectId, validateAnswer],
+  qaController.updateAnswer
+);
 
 /**
  * @swagger
@@ -370,7 +364,11 @@ router.delete("/answers/:answerId", qaController.deleteAnswer);
  *       404:
  *         description: Answer not found
  */
-router.post("/answers/:answerId/vote", [validateObjectId, validateVote], qaController.voteAnswer);
+router.post(
+  "/answers/:answerId/vote",
+  [validateObjectId, validateVote],
+  qaController.voteAnswer
+);
 
 /**
  * @swagger
@@ -427,7 +425,11 @@ router.post("/answers/:answerId/accept", qaController.acceptAnswer);
  *       404:
  *         description: Answer not found
  */
-router.post("/answers/:answerId/replies", [validateObjectId, validateReply], qaController.createReply);
+router.post(
+  "/answers/:answerId/replies",
+  [validateObjectId, validateReply],
+  qaController.createReply
+);
 
 /**
  * @swagger
@@ -453,7 +455,11 @@ router.post("/answers/:answerId/replies", [validateObjectId, validateReply], qaC
  *       404:
  *         description: Reply not found
  */
-router.put("/replies/:replyId", [validateObjectId, validateReply], qaController.updateReply);
+router.put(
+  "/replies/:replyId",
+  [validateObjectId, validateReply],
+  qaController.updateReply
+);
 
 /**
  * @swagger
@@ -474,12 +480,11 @@ router.put("/replies/:replyId", [validateObjectId, validateReply], qaController.
  *         description: Reply not found
  */
 router.delete("/replies/:replyId", qaController.deleteReply);
-
 /**
  * @swagger
  * /qa/search:
  *   get:
- *     summary: Search questions
+ *     summary: Search questions by query string or tags
  *     tags: [Q&A]
  *     parameters:
  *       - in: query
@@ -487,12 +492,6 @@ router.delete("/replies/:replyId", qaController.deleteReply);
  *         schema:
  *           type: string
  *         description: Search query string (minimum 2 characters)
- *     responses:
- *       200:
- *   get:
- *     summary: Search questions by tags
- *     tags: [Q&A]
- *     parameters:
  *       - in: query
  *         name: tags
  *         schema:
@@ -500,7 +499,7 @@ router.delete("/replies/:replyId", qaController.deleteReply);
  *         description: Comma-separated list of tags (2-20 characters each)
  *     responses:
  *       200:
- *         description: List of questions with matching tags
+ *         description: List of matching questions
  *         content:
  *           application/json:
  *             schema:
@@ -515,7 +514,7 @@ router.delete("/replies/:replyId", qaController.deleteReply);
  *                   items:
  *                     $ref: "#/components/schemas/Question"
  *       400:
- *         description: Invalid tags format
+ *         description: Invalid search parameters
  */
 router.get("/search/tags", validateSearch, qaSearchController.searchByTags);
 
@@ -572,7 +571,11 @@ router.get("/search/tags", validateSearch, qaSearchController.searchByTags);
  *       400:
  *         description: Invalid search parameters
  */
-router.get("/search/advanced", validateSearch, qaSearchController.advancedSearch);
+router.get(
+  "/search/advanced",
+  validateSearch,
+  qaSearchController.advancedSearch
+);
 
 /**
  * @swagger
@@ -627,7 +630,10 @@ router.post("/sentiment/analyze", sentimentController.analyzeSentiment);
  *       404:
  *         description: Question not found
  */
-router.put("/sentiment/question/:questionId", sentimentController.updateQuestionSentiment);
+router.put(
+  "/sentiment/question/:questionId",
+  sentimentController.updateQuestionSentiment
+);
 
 /**
  * @swagger
@@ -642,7 +648,7 @@ router.put("/sentiment/question/:questionId", sentimentController.updateQuestion
  *       - Sentiment analysis scores
  *       - View counts and vote scores
  *       - Timestamps
- *       
+ *
  *       Requires proper Google Sheets API configuration and credentials.
  *     responses:
  *       200:
@@ -667,7 +673,10 @@ router.put("/sentiment/question/:questionId", sentimentController.updateQuestion
  *                   type: string
  *                   example: "Google Sheets API error: insufficient permissions"
  */
-router.post("/dashboard/update", sentimentController.updateGoogleSheetsDashboard);
+router.post(
+  "/dashboard/update",
+  sentimentController.updateGoogleSheetsDashboard
+);
 
 /**
  * @swagger
@@ -713,6 +722,9 @@ router.get("/frequent", sentimentController.getFrequentQuestions);
  *       404:
  *         description: Question not found
  */
-router.put("/frequency/:questionId", sentimentController.updateQuestionFrequency);
+router.put(
+  "/frequency/:questionId",
+  sentimentController.updateQuestionFrequency
+);
 
 module.exports = router;
