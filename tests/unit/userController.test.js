@@ -1,3 +1,3 @@
 describe("sendResponse function", () => {
-  it('should send "respond with a resource"', () => {});
+  it("should send \"respond with a resource\"", () => {});
 });

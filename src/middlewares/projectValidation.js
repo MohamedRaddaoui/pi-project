@@ -1,5 +1,5 @@
-const {body,validationResult} = require ('express-validator');
-const mongoose = require('mongoose')
+const {body,validationResult} = require ("express-validator");
+const mongoose = require("mongoose");
 
 // Middleware to validate MongoDB ObjectId
 exports.validateObjectId = (req, res, next) => {
@@ -11,27 +11,27 @@ exports.validateObjectId = (req, res, next) => {
 
 //Middleware to validate Project
 exports.validateProject =[
-    body('title')
+    body("title")
     .notEmpty()
     .withMessage("Project name is required")
     .isLength({min:3})
     .withMessage("Project name must be at least 3 characters long.")
     .trim(),
 
-    body('description')
+    body("description")
     .notEmpty()
     .withMessage("Description is required")
     .isLength({min : 200}).withMessage("description name must be at least 200 characters long.")
     .trim(),
 
-    body('startDate')
+    body("startDate")
     .notEmpty().withMessage(" Start date is required")
     .isISO8601()  // Checks if startDate follows the ISO 8601 format.
     .withMessage("Invalid date format")
     .bail()
     .customSanitizer((value) => new Date(value))  // Convert to date object
     .custom((startDate, {req}) => {
-           const endDate = new Date(req.body.endDate) // Get the endDate from the request body
+           const endDate = new Date(req.body.endDate); // Get the endDate from the request body
            const today = new Date();
         
            // Remove time part to compare only dates
@@ -40,14 +40,14 @@ exports.validateProject =[
 
           if (startDate < today) {  // checks if startDate is not in the past 
            throw new Error("Start date must not be in the past.");
-          }
+                                 }
          if (startDate >= endDate) { // checks if startDate is greater than or equal to endDate
-             throw new Error("Start date must be before the end date.");
-         }
+              throw new Error("Start date must be before the end date.");
+                                   }
          return true;
 
-     }),
-    body('endDate')
+                                  }),
+    body("endDate")
     .notEmpty().withMessage("End date is required")
     .isISO8601()  // Checks if startDate follows the ISO 8601 format.
     .withMessage("Invalid date format")
@@ -78,7 +78,7 @@ exports.validateProject =[
     //   }
     // }),
 
-    body('status')
+    body("status")
     .optional()
     .trim()
     .isIn(["Not Started","In Progress", "Done", "Canceled"])
@@ -119,12 +119,5 @@ exports.validateProject =[
     }
     next();
   },
-
-
-
-    
-
-
-    
-]
+];
 
