@@ -112,21 +112,54 @@ exports.updateQuestion = async (req, res) => {
   }
 };
 
+const mongoose = require("mongoose");
+
 exports.deleteQuestion = async (req, res) => {
+  const session = await mongoose.startSession();
+  session.startTransaction();
+
   try {
-    const question = await Question.findById(req.params.questionId);
+    // Validate ObjectId
+    if (!mongoose.Types.ObjectId.isValid(req.params.questionId)) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(400).json({ message: "Invalid question ID" });
+    }
+
+    // Find the question
+    const question = await Question.findById(req.params.questionId).session(session);
     
     if (!question) {
+      await session.abortTransaction();
+      session.endSession();
       return res.status(404).json({ message: "Question not found" });
     }
-    
-    // Delete all associated answers and replies
-    await Answer.deleteMany({ questionId: question._id });
-    await question.remove();
-    
+
+    // Optional: Check if the user is authorized to delete the question
+    // Assuming req.user contains the authenticated user's data
+    // Uncomment and adjust based on your auth setup
+    /*
+    if (question.author.toString() !== req.user._id.toString()) {
+      await session.abortTransaction();
+      session.endSession();
+      return res.status(403).json({ message: "Unauthorized to delete this question" });
+    }
+    */
+
+    // Delete all associated answers (replies are embedded, so they’ll be deleted automatically)
+    await Answer.deleteMany({ questionId: question._id }).session(session);
+
+    // Delete the question using findByIdAndDelete instead of remove()
+    await Question.findByIdAndDelete(req.params.questionId).session(session);
+
+    await session.commitTransaction();
+    session.endSession();
+
     res.status(200).json({ message: "Question and all associated answers deleted" });
   } catch (error) {
-    res.status(500).json({ error: error.message });
+    await session.abortTransaction();
+    session.endSession();
+    res.status(500).json({ error: `Failed to delete question: ${error.message}` });
   }
 };
 
