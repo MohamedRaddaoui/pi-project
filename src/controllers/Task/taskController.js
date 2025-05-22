@@ -25,8 +25,8 @@ exports.createTask = async (req, res) => {
 exports.getAllTasks = async (req, res) => {
   try {
     const tasks = await Task.find()
-      .populate("assignedUser", "firstname") 
-      .populate("projectId", "projectId");   
+      .populate("assignedUser", "firstname lastname") 
+      .populate("projectId", "title");   
     res.status(200).json({ tasks });
   } catch (err) {
     res.status(500).json({ message: "Erreur serveur", error: err });
@@ -172,7 +172,6 @@ exports.updateTaskAndSendEmail = async (req, res) => {
 
     //journaliser les changements dans la collection TaskHistory
     const detectedChanges = detectChanges(oldTask, updatedTask.toObject());
-console.log("detectChanges", detectChanges);
     if (Object.keys(detectedChanges).length > 0) {
       await TaskHistory.create({
         task: updatedTask._id,
@@ -210,12 +209,12 @@ console.log("detectChanges", detectChanges);
          console.log(`Notification sent to user ${userId}`);
       }
     }
+    //6 - update project 
+    await updateProjectStatus(updatedTask.projectId);
 
-    res.status(200).json({
-      message: "Task updated successfully",
-      task: updatedTask,
-      changes
-    });
+    res.status(200).json({ message: "Task updated successfully", task: updatedTask });
+
+    
 
   } catch (error) {
     res.status(400).json({ error: error.message });
