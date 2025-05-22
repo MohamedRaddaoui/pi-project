@@ -109,3 +109,25 @@ exports.deleteAttachmentFromComment = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+exports.getCommentsByTaskId = async (req, res) => {
+  try {
+    const { taskId } = req.params;
+
+    // Vérifie si la tâche existe
+    const task = await Task.findById(taskId);
+    if (!task) {
+      return res.status(404).json({ message: "Tâche non trouvée" });
+    }
+
+    // Récupère les commentaires associés à cette tâche
+    const comments = await TaskComment.find({ task: taskId })
+      .populate("user", "firstname lastname email _id")
+      .select("-__v"); // Facultatif : on peut exclure __v
+
+    res.status(200).json({ comments });
+
+  } catch (error) {
+    console.error("Erreur lors de la récupération des commentaires :", error);
+    res.status(500).json({ error: error.message });
+  }
+};

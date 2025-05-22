@@ -4,10 +4,17 @@ var cookieParser = require("cookie-parser");
 var logger = require("morgan");
 require("dotenv").config();
 const setupSwagger = require("./swagger");
-
+const cors = require("cors");
 // Importation des tâches cron
 require('./cron/deadlineReminderJob'); // Assure-toi que le chemin est correct
-
+const corsOptions = {
+    origin: "*", // Attention: à modifier en production
+    methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"],
+    credentials: true,
+    optionsSuccessStatus: 200,
+  };
+  
 // Use the base URL from the .env file for all routes
 const baseUrl = process.env.BASE_URL || "/api"; // Default to '/api' if not specified
 
@@ -18,6 +25,7 @@ var app = express();
 
 // view engine setup
 app.set("view engine", "jade");
+app.use(cors(corsOptions));
 
 app.use(logger("dev"));
 app.use(express.json());
