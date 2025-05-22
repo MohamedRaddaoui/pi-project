@@ -72,6 +72,12 @@ Project.virtual("tasksID", {
     foreignField: "projectId",
   });
 
+  Project.virtual("sprintsID", {
+    ref: "sprint",
+    localField: "_id",
+    foreignField: "projectID",
+  });
+
   // 📌 Activation des champs virtuels pour les JSON
   Project.set("toJSON", { virtuals: true });
   Project.set("toObject", { virtuals: true });

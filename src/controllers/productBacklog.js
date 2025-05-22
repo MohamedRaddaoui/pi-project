@@ -2,15 +2,23 @@ const ProductBacklog = require('../models/productBacklog')
 const userStory = require('../models/userStory');
 
 // Ajouter un nouveau ProductBacklog
- async function createProductBacklog  (req, res) {
-    try { 
-        const newProductBacklog = new ProductBacklog(req.body)
+async function createProductBacklog(req, res) {
+    try {
+        // Créer un nouveau backlog avec l’ID du projet associé
+        const newProductBacklog = new ProductBacklog({
+            title:req.body.title,
+            description:req.body.description,
+            projectID: req.params.id
+        });
+
         await newProductBacklog.save();
+
         res.status(201).json({ message: 'Product Backlog created successfully!', newProductBacklog });
     } catch (error) {
+        console.error(error);
         res.status(500).json({ error: 'Error creating Product Backlog' });
     }
-};
+}
 
 
 // Récupérer tous les ProductBacklogs
@@ -72,9 +80,9 @@ async function deleteProductBacklog (req, res) {
 
 // Filtrer les ProductBacklogs par projet
 async function getProductBacklogsByProject(req, res){
-    const { projectId } = req.params;
+    const { id} = req.params;
     try {
-        const productBacklogs = await ProductBacklog.find({ projectID: projectId })
+        const productBacklogs = await ProductBacklog.find({ projectID: id })
                                                     .populate('userStoriesId');
         res.status(200).json(productBacklogs);
     } catch (error) {

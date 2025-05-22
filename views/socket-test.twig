@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+  <title>Test Socket</title>
+  <script src="/socket.io/socket.io.js"></script>
+</head>
+
+<body>
+  <h1>Bonjour </h1>
+  <p>Tu es connecté à la socket !</p>
+
+  <script>
+    const socket = io();
+
+  socket.on("connect", () => {
+      const userId = "67fef2f193e40a970677e8c5";  //  le userId réel de l'utilisateur connecté
+      socket.emit("join", userId);  // L'utilisateur rejoint la room
+      console.log("Utilisateur connecté et rejoint la room");
+    });
+
+    // Écouter la notification taskUpdated
+    socket.on("taskUpdated", (data) => {
+      alert(data.message);
+      console.log(data);
+     
+    });
+  </script>
+</body>
+<div id="notification"></div>
+
+</html>

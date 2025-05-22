@@ -5,9 +5,10 @@ const swaggerOptions = {
   definition: {
     openapi: "3.0.0",
     info: {
-      title: "Event and Forum API",
+      title: "Event API",
       version: "1.0.0",
-      description: "API documentation for managing events and forum comments with authentication",
+      description:
+        "API documentation for managing events and forum comments with authentication",
     },
     servers: [
       {
@@ -17,7 +18,6 @@ const swaggerOptions = {
     ],
     components: {
       schemas: {
-        // Event schema
         Event: {
           type: "object",
           required: [
@@ -302,71 +302,71 @@ const swaggerOptions = {
               format: "date-time",
             },
           },
-          example:{
-             _id: "60d21b4667d0d8992e610c95",
-             title: "Updated Task Title",
-             description: "This task has been updated with new details.",
-             status: "In Progress",
-             priority: "Medium",
-             dueDate: "2025-03-22",
-             projectId: "65f123456789abcdef123456",
-             assignedUser: "65fabcdef123456789abcdef",
-             createdAt: "2025-03-11T10:00:00Z",
-	           updatedAt: "2025-03-15T12:00:00Z"
-	         }
+          example: {
+            _id: "60d21b4667d0d8992e610c95",
+            title: "Updated Task Title",
+            description: "This task has been updated with new details.",
+            status: "In Progress",
+            priority: "Medium",
+            dueDate: "2025-03-22",
+            projectId: "65f123456789abcdef123456",
+            assignedUser: "65fabcdef123456789abcdef",
+            createdAt: "2025-03-11T10:00:00Z",
+            updatedAt: "2025-03-15T12:00:00Z",
+          },
         },
-      // TaskCreate schema (for creating tasks)
+        // TaskCreate schema (for creating tasks)
         TaskCreate: {
-        type: "object",
-        required: ["title", "projectId"],
-        properties: {
-          title: {
-            type: "string",
-            description: "Task title"
+          type: "object",
+          required: ["title", "projectId"],
+          properties: {
+            title: {
+              type: "string",
+              description: "Task title",
+            },
+            description: {
+              type: "string",
+              description: "Task details",
+            },
+            status: {
+              type: "string",
+              enum: ["To Do", "In Progress", "Done"],
+              default: "To Do",
+            },
+            priority: {
+              type: "string",
+              enum: ["Low", "Medium", "High"],
+              default: "Medium",
+            },
+            dueDate: {
+              type: "string",
+              format: "date",
+              description: "Due date of the task",
+            },
+            projectId: {
+              type: "string",
+              description: "Project ID the task belongs to",
+            },
+            assignedUser: {
+              type: "string",
+              description: "ID of the assigned user",
+            },
           },
-          description: {
-            type: "string",
-            description: "Task details"
+          example: {
+            title: "New Task",
+            description: "This is a test task",
+            status: "To Do",
+            priority: "High",
+            dueDate: "2025-03-20",
+            projectId: "65f123456789abcdef123456",
+            assignedUser: "65fabcdef123456789abcdef",
           },
-          status: {
-            type: "string",
-            enum: ["To Do", "In Progress", "Done"],
-            default: "To Do"
-          },
-          priority: {
-            type: "string",
-            enum: ["Low", "Medium", "High"],
-            default: "Medium"
-          },
-          dueDate: {
-            type: "string",
-            format: "date",
-            description: "Due date of the task"
-          },
-          projectId: {
-            type: "string",
-            description: "Project ID the task belongs to"
-          },
-          assignedUser: {
-            type: "string",
-            description: "ID of the assigned user"
-          }
         },
-        example: {
-          title: "New Task",
-          description: "This is a test task",
-          status: "To Do",
-          priority: "High",
-          dueDate: "2025-03-20",
-          projectId: "65f123456789abcdef123456",
-          assignedUser: "65fabcdef123456789abcdef"
-        }
-       },
       },
     },
     security: [{ BearerAuth: [] }],
   },
-  apis: ["./src/routes/*.js"], // Ensure this path matches your routes
+  apis: ["./src/routes/*.js"],
 };
 
 const swaggerSpec = swaggerJsdoc(swaggerOptions);

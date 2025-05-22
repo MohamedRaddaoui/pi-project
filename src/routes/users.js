@@ -1,18 +1,26 @@
 var express = require("express");
 var router = express.Router();
-var usercontroller = require("../controllers/userController.js");
+const userController = require("../controllers/userController");
+const auth = require("../middlewares/auth");
 
-/* GET users listing. */
+/* CRUD */
+router.post("/adduser", userController.adduser);
+router.get("/showuser", auth, userController.showuser); // Obtenir tous les utilisateurs
+router.get("/showById/:id", userController.showById); // Obtenir un utilisateur spécifique par ID
+router.delete("/deleteuser/:id", userController.deleteuser);
+router.put("/updateuser/:id", userController.updateuser);
 
+// Route pour la connexion avec 2FA
+router.post("/login", userController.login);
 
-router.post("/adduser", usercontroller.adduser);
+// Endpoint pour vérifier le code 2FA
+router.post("/verify-2fa", userController.verify2FA);
 
-router.get("/showuser",usercontroller.showuser);
+// Route de déconnexion
+router.post("/logout", userController.logout);
 
-router.delete("/deleteuser/:id",usercontroller.deleteuser);
+router.post("/forgot-password", userController.forgotPassword);
 
-router.put("/updateuser/:id", usercontroller.updateuser);
+router.post("/reset-password/:token", userController.resetPassword);
 
 module.exports = router;
-
-

@@ -15,6 +15,7 @@ const baseUrl = process.env.BASE_URL || "/api"; // Default to '/api' if not spec
 
 var indexRouter = require("./src/routes/index");
 
+
 var app = express();
 app.use(cors({
     origin: 'http://localhost:4200',
@@ -25,7 +26,7 @@ app.use(cors({
 
 // view engine setup
 app.set("view engine", "jade");
-
+app.use(cors());
 app.use(logger("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
@@ -33,6 +34,10 @@ app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
 app.use(baseUrl + "/", indexRouter);
 setupSwagger(app); // Setup Swagger
+app.set("view engine", "twig");
+
+// Indiquer le dossier contenant les vues
+app.set("views", path.join(__dirname, "views"));
 
 
 module.exports = app;

@@ -1,15 +1,45 @@
+const productBacklog = require('../models/productBacklog');
 const UserStory = require('../models/userStory');
+const mongoose = require('mongoose')
+
+// 
 
 const createUserStory = async (req, res) => {
   try {
-    const userStory = new UserStory(req.body);
+    const { backlogID, title, description, priority, storyPoints } = req.body;
+
+    if (!backlogID || backlogID === "undefined") {
+      return res.status(400).json({ message: "Le backlog est requis et doit être valide" });
+    }
+
+    const mongoose = require('mongoose');
+    if (!mongoose.Types.ObjectId.isValid(backlogID)) {
+      return res.status(400).json({ message: "Le backlogID n'est pas un ObjectId valide" });
+    }
+
+    const userStory = new UserStory({
+      title,
+      description,
+      priority,
+      storyPoints,
+      backlog: backlogID
+    });
+
     await userStory.save();
+
+    await productBacklog.findByIdAndUpdate(backlogID, {
+      $push: { userStoriesId: userStory._id }
+    });
+
     res.status(201).json({ message: "User Story créée avec succès", userStory });
 
   } catch (error) {
+    console.error(error);
     res.status(500).json({ message: "Erreur serveur lors de la création de la User Story" });
   }
 };
+
+
 
 
 
@@ -122,6 +152,37 @@ async function getUserStoriesBySprint (req, res) {
 
 
 
+
+// Remove a user story from sprint
+async function removeUserStoryFromSprint(req, res) {
+  try {
+    const userStory = await UserStory.findById(req.params.id);
+
+    if (!userStory) {
+      return res.status(404).json({ message: 'User story not found' });
+    }
+
+    userStory.sprintId = null;
+    await userStory.save();
+
+    res.status(200).json({ message: 'User story removed from sprint successfully' });
+  } catch (error) {
+    res.status(500).json({ message: 'Server error', error });
+  }
+};
+
+
+async function getUserStoriesByBacklog (req, res) {
+  try {
+    const stories = await UserStory.find({ backlogID: req.params.sprintID }).populate();
+    res.json(stories);
+  } catch (err) {
+    res.status(500).json({ message: err.message });
+  }
+};
+
+
+
 // GET /user-stories/sprint/:sprintID/story-points
 async function getTotalStoryPoints (req, res) {
   try {
@@ -149,10 +210,4 @@ async function filterUserStories (req, res){
   }
 };
 
-
-
-  
-
-
-
-module.exports={createUserStory,getAllUserStories,updateUserStory,deleteUserStory,filterUserStories,getStoryStats,assignUser,unassignUser,getUserStoriesBySprint,getTotalStoryPoints,filterUserStories}
+module.exports={createUserStory,getAllUserStories,updateUserStory,deleteUserStory,filterUserStories,getStoryStats,assignUser,unassignUser,getUserStoriesBySprint,getUserStoriesByBacklog,removeUserStoryFromSprint,getTotalStoryPoints,filterUserStories}

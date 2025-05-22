@@ -4,7 +4,7 @@ const EventSchema = new mongoose.Schema(
   {
     title: {
       type: String,
-      required: true,
+      required: true, 
       trim: true,
     },
     description: {
@@ -13,12 +13,12 @@ const EventSchema = new mongoose.Schema(
     },
     date: {
       type: Date,
-      required: true,
-      index: true, // Improves query performance
+      required: true, 
+      index: true, 
     },
     startTime: {
       type: Date,
-      required: true,
+      required: true, 
       validate: {
         validator: function (value) {
           return value >= this.date;
@@ -43,11 +43,9 @@ const EventSchema = new mongoose.Schema(
     type: {
       type: String,
       enum: ["Meeting", "Appointment", "Event"],
-      required: true,
     },
     maxAttendees: {
       type: Number,
-      required: true,
     },
     attendees: [
       {
@@ -58,7 +56,7 @@ const EventSchema = new mongoose.Schema(
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
-      required: true,
+      // required: true,
     },
     status: {
       type: String,

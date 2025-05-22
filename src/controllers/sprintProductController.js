@@ -1,15 +1,98 @@
 const Sprint = require('../models/sprintProduct');
 const UserStory = require('../models/userStory');
+const Event=require('../models/event');
 
 // ➕ Create
-async function createSprint (req, res) {
+async function createSprint(req, res) {
   try {
-    const sprint = await Sprint.create(req.body);
-    res.status(201).json(sprint);
-  } catch (error) {
-    res.status(400).json({ error: error.message });
+    const { title, goal, start_date, end_date, dailyStartTime, dailyEndTime, reviewStartTime, reviewEndTime, retroStartTime, retroEndTime } = req.body;
+    const projectID = req.params.id;
+
+    // 1. Créer le sprint sans startTime/endTime (car c'est dans Event)
+    const sprint = new Sprint({
+      title,
+      goal,
+      start_date,
+      end_date,
+      projectID,
+      planning: [],
+      reviews: [],
+      retrospectives: []
+    });
+
+    await sprint.save();
+
+    // 2. Créer les daily meetings pour chaque jour entre start_date et end_date
+    const planningEvents = [];
+    let currentDate = new Date(start_date);
+    while (currentDate <= new Date(end_date)) {
+      const startTime = combineDateTime(currentDate, dailyStartTime);
+      const endTime = combineDateTime(currentDate, dailyEndTime);
+
+      const dailyMeetingEvent = new Event({
+        title: 'Daily Meeting',
+        date: new Date(currentDate),   // date sans heure
+        startTime,
+        endTime,
+        type: 'Meeting',
+        projectID,
+        sprintID: sprint._id,
+        repeat: 'None'
+      });
+
+      await dailyMeetingEvent.save();
+      planningEvents.push(dailyMeetingEvent._id);
+
+      currentDate.setDate(currentDate.getDate() + 1);
+    }
+
+    // 3. Créer Sprint Review event
+    const reviewEvent = new Event({
+      title: 'Sprint Review',
+      date: new Date(end_date),
+      startTime: combineDateTime(new Date(end_date), reviewStartTime),
+      endTime: combineDateTime(new Date(end_date), reviewEndTime),
+      type: 'Meeting',
+      projectID,
+      sprintID: sprint._id,
+      repeat: 'None'
+    });
+    await reviewEvent.save();
+
+    // 4. Créer Sprint Retrospective event
+    const retrospectiveEvent = new Event({
+      title: 'Sprint Retrospective',
+      date: new Date(end_date),
+      startTime: combineDateTime(new Date(end_date), retroStartTime),
+      endTime: combineDateTime(new Date(end_date), retroEndTime),
+      type: 'Meeting',
+      projectID,
+      sprintID: sprint._id,
+      repeat: 'None'
+    });
+    await retrospectiveEvent.save();
+
+    // 5. Mettre à jour le sprint avec les références aux events
+    sprint.planning = planningEvents;
+    sprint.reviews = [reviewEvent._id];
+    sprint.retrospectives = [retrospectiveEvent._id];
+    await sprint.save();
+
+    return sprint;
+    
+
+  } catch (err) {
+    console.error('Error creating sprint:', err);
+    throw err;
   }
-};
+}
+
+function combineDateTime(date, timeStr) {
+  const dateObj = new Date(date);
+  const [hours, minutes] = timeStr.split(':').map(Number);
+  dateObj.setHours(hours, minutes, 0, 0);
+  return dateObj;
+}
 
 // 📖 Get all
 async function getAllSprints (req, res){
@@ -31,6 +114,25 @@ async function getSprintById (req, res){
     res.status(500).json({ error: error.message });
   }
 };
+
+
+// 📖 Get one by project and backlog
+async function getSprintByProject(req, res) {
+  try {
+    const {id} = req.params;
+
+    const sprint = await Sprint.find({ projectID: id }).populate("userStories");
+
+    if (!sprint) {
+      return res.status(404).json({ error: 'Sprint not found for the given project and backlog' });
+    }
+
+    res.json(sprint);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+}
+
 
 // ✏️ Update
 async function updateSprint (req, res) {
@@ -82,61 +184,44 @@ async function completeSprint (req, res) {
 };
 
 
-async function addUserStoryToSprint (req, res) {
+// Dans votre contrôleur de sprints
+ async function  addUserStoryToSprint (req, res) {
   try {
-    const sprint = await Sprint.findByIdAndUpdate(
-      req.params.id,
-      { $addToSet: { userStories: req.body.userStoryId } },
-      { new: true }
-    );
-    res.json(sprint);
-  } catch (err) {
-    res.status(400).json({ error: err.message });
+    const { sprintId } = req.params;
+    const { userStoryId } = req.body;
+    
+    // Vérifier que le sprint existe
+    const sprint = await Sprint.findById(sprintId);
+    if (!sprint) {
+      return res.status(404).json({ message: 'Sprint non trouvé' });
+    }
+    
+    // Vérifier que la user story existe
+    const userStory = await UserStory.findById(userStoryId);
+    if (!userStory) {
+      return res.status(404).json({ message: 'User Story non trouvée' });
+    }
+    
+    // Ajouter la user story au sprint
+    if (!sprint.userStories) {
+      sprint.userStories = [];
+    }
+    
+    // Vérifier si la user story n'est pas déjà dans le sprint
+    if (!sprint.userStories.includes(userStoryId)) {
+      sprint.userStories.push(userStoryId);
+      await sprint.save();
+    }
+    
+    // Optionnel : Retirer la user story du backlog
+    // Cela dépend de votre logique métier
+    
+    res.status(200).json({ message: 'User Story ajoutée au sprint avec succès', sprint });
+  } catch (error) {
+    console.error('Erreur lors de l\'ajout de la user story au sprint:', error);
+    res.status(500).json({ message: 'Erreur serveur', error: error.message });
   }
-};
-
-
-
-async function addDailyMeeting (req, res){
-  try {
-    // Créer un événement "Daily Meeting"
-    const dailyMeeting = new Event({
-      title: req.body.title,
-      description: req.body.description,
-      date: req.body.date,
-      startTime: req.body.startTime,
-      endTime: req.body.endTime,
-      type: 'Meeting', // spécifie que c'est une réunion
-      maxAttendees: req.body.maxAttendees,
-      attendees: req.body.attendees, // Ajoutez les utilisateurs ici si nécessaire
-      createdBy: req.body.createdBy,
-      status: 'Scheduled',
-      visibility: req.body.visibility || 'Private', // Par défaut, privé
-      repeat: 'None', // Ne pas répéter (peut être modifié selon les besoins)
-    });
-
-    // Sauvegarder l'événement dans la collection Event
-    const savedMeeting = await dailyMeeting.save();
-
-    // Mettre à jour le Sprint en ajoutant l'ID de l'événement
-    const sprint = await Sprint.findByIdAndUpdate(
-      req.params.id, // L'ID du sprint
-      { $addToSet: { planning: savedMeeting._id } }, // Ajoute l'ID de l'événement dans 'planning'
-      { new: true }
-    );
-
-    // Retourner la réponse avec les données mises à jour
-    res.status(200).json({
-      message: 'Daily Meeting ajouté avec succès!',
-      sprint,
-      event: savedMeeting
-    });
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
-};
-
-
+}
 
 async function getActiveSprintsByProject (req, res) {
   try {
@@ -166,35 +251,4 @@ async function checkIfSprintIsLate (req, res) {
 };
 
 
-async function addReview (req, res) {
-  try {
-    const sprint = await Sprint.findByIdAndUpdate(
-      req.params.id,
-      { $addToSet: { reviews: req.body.eventId } },
-      { new: true }
-    );
-    res.json(sprint);
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
-};
-
-async function addRetrospective (req, res){
-  try {
-    const sprint = await Sprint.findByIdAndUpdate(
-      req.params.id,
-      { $addToSet: { retrospectives: req.body.eventId } },
-      { new: true }
-    );
-    res.json(sprint);
-  } catch (err) {
-    res.status(400).json({ error: err.message });
-  }
-};
-
-
-
-  
-
-
-module.exports={createSprint,getAllSprints,getSprintById,updateSprint,deleteSprint,startSprint,addUserStoryToSprint,addDailyMeeting,getActiveSprintsByProject,checkIfSprintIsLate,addReview,addRetrospective}
+module.exports={createSprint,getAllSprints,getSprintById,getSprintByProject,updateSprint,deleteSprint,startSprint,addUserStoryToSprint,getActiveSprintsByProject,checkIfSprintIsLate}

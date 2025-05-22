@@ -26,6 +26,10 @@ const UserStory = new Schema({
       type: mongoose.Schema.Types.ObjectId,
       ref: 'User', // Utilisateur auquel la tâche est assignée
     },
+    backlogID:{
+      type:mongoose.Schema.Types.ObjectId,
+      ref:'productBacklog'
+    }
 }, { timestamps: true });
 
 module.exports = mongoose.model('userStory', UserStory);

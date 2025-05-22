@@ -8,8 +8,7 @@ const {
 }= require("../middlewares/projectValidation");
 
 // 📌 Add new project
-router.post("/addProject",projectCtrl.createProject); 
-
+router.post("/addProject",validateProject,projectCtrl.createProject);  
 // 📌 Show project by ID
 router.get("/projectByID/:id",validateObjectId,projectCtrl.getProjectByID); 
 // 📌 Show all Project
@@ -32,7 +31,6 @@ router.get("/getArchProject",projectCtrl.getAllArchivedProject);
 router.get("/getProjectByUser/:id",projectCtrl.getProjectByUser);
 // 📌 Delete tasks selected by Project
 router.delete("/DeleteTaskByProject/:id", projectCtrl.deleteSomeTasksFromProject);
-//
 
 //Calculate progress project 
 router.get("/calculateProgress/:id",projectCtrl.getProjectProgress)

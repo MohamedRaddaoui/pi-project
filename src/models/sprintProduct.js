@@ -24,7 +24,7 @@ const Sprint = new Schema({
   projectID: { 
     type: mongoose.Schema.Types.ObjectId, 
     ref: 'project' },
-
+  
   userStories: [{
      type: mongoose.Schema.Types.ObjectId, 
      ref: 'userStory'
