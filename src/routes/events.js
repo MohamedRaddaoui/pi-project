@@ -5,6 +5,8 @@ const {
   validateEvent,
   validateObjectId,
 } = require("../middlewares/validation");
+const upload = require("../middlewares/upload");
+const auth = require("../middlewares/auth");
 
 /**
  * @swagger
@@ -15,63 +17,71 @@ const {
 
 /**
  * @swagger
- * components:
- *   schemas:
- *     Event:
- *       type: object
- *       required:
- *         - title
- *         - startTime
- *         - endTime
- *         - type
- *       properties:
- *         id:
- *           type: string
- *           description: Auto-generated ID of the event
- *         title:
- *           type: string
- *           description: Title of the event
- *         startTime:
- *           type: string
- *           format: date-time
- *           description: Event start time
- *         endTime:
- *           type: string
- *           format: date-time
- *           description: Event end time
- *         type:
- *           type: string
- *           enum: [conference, workshop, webinar]
- *           description: Type of event
- *       example:
- *         id: "60d21b4667d0d8992e610c85"
- *         title: "Tech Conference 2025"
- *         startTime: "2025-06-15T10:00:00Z"
- *         endTime: "2025-06-15T16:00:00Z"
- *         type: "conference"
- */
-
-/**
- * @swagger
  * /events:
  *   post:
- *     summary: Create a new event
+ *     summary: Create a new event with optional attachments
  *     tags: [Events]
- *     security:
- *       - BearerAuth: []
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
- *             $ref: '#/components/schemas/Event'
+ *             type: object
+ *             required:
+ *               - title
+ *               - date
+ *               - startTime
+ *               - endTime
+ *               - type
+ *               - maxAttendees
+ *             properties:
+ *               title:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               date:
+ *                 type: string
+ *                 format: date-time
+ *               startTime:
+ *                 type: string
+ *                 format: date-time
+ *               endTime:
+ *                 type: string
+ *                 format: date-time
+ *               location:
+ *                 type: string
+ *               type:
+ *                 type: string
+ *                 enum: [Meeting, Appointment, Deadline, Event]
+ *               maxAttendees:
+ *                 type: integer
+ *               visibility:
+ *                 type: string
+ *                 enum: [Public, Private]
+ *               repeat:
+ *                 type: string
+ *                 enum: [None, Daily, Weekly, Monthly]
+ *               attachments:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   format: binary
  *     responses:
  *       201:
  *         description: Event created successfully
  *       400:
- *         description: Bad request (validation errors)
+ *         description: Validation error
+ *       500:
+ *         description: Internal server error
  */
-router.post("/", validateEvent, eventController.createEvent);
+
+router.post(
+  "/",
+  auth,
+  upload.array("attachments"),
+  validateEvent,
+  eventController.createEvent
+);
 
 /**
  * @swagger
@@ -107,35 +117,73 @@ router.get("/", eventController.getAllEvents);
  *       404:
  *         description: Event not found
  */
-router.get("/:id", validateObjectId, eventController.getEventById);
+router.get("/getEventById/:id", eventController.getEventById);
 
 /**
  * @swagger
- * /events/{id}:
+ * /api/events/{id}:
  *   put:
- *     summary: Update an event
+ *     summary: Update an existing event and optionally add attachments
  *     tags: [Events]
- *     security:
- *       - BearerAuth: []
  *     parameters:
  *       - in: path
  *         name: id
  *         required: true
  *         schema:
  *           type: string
+ *         description: Event ID
  *     requestBody:
  *       required: true
  *       content:
- *         application/json:
+ *         multipart/form-data:
  *           schema:
- *             $ref: '#/components/schemas/Event'
+ *             type: object
+ *             properties:
+ *               title:
+ *                 type: string
+ *               description:
+ *                 type: string
+ *               date:
+ *                 type: string
+ *                 format: date-time
+ *               startTime:
+ *                 type: string
+ *                 format: date-time
+ *               endTime:
+ *                 type: string
+ *                 format: date-time
+ *               location:
+ *                 type: string
+ *               type:
+ *                 type: string
+ *                 enum: [Meeting, Appointment, Event]
+ *               maxAttendees:
+ *                 type: integer
+ *               visibility:
+ *                 type: string
+ *                 enum: [Public, Private]
+ *               repeat:
+ *                 type: string
+ *                 enum: [None, Daily, Weekly, Monthly]
+ *               attachments:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                   format: binary
  *     responses:
  *       200:
  *         description: Event updated successfully
  *       404:
  *         description: Event not found
+ *       500:
+ *         description: Internal server error
  */
-router.patch("/:id", validateObjectId, eventController.updateEvent);
+
+router.patch(
+  "/updateEventById/:id",
+  upload.array("attachments"),
+  eventController.updateEvent
+);
 
 /**
  * @swagger
@@ -157,6 +205,100 @@ router.patch("/:id", validateObjectId, eventController.updateEvent);
  *       404:
  *         description: Event not found
  */
-router.delete("/:id", validateObjectId, eventController.deleteEvent);
+router.delete("/deleteEventById/:id", eventController.deleteEvent);
+
+/**
+ * @swagger
+ * /events/{eventId}/participate:
+ *   post:
+ *     summary: Participate in an event
+ *     tags: [Events]
+ *     parameters:
+ *       - in: path
+ *         name: eventId
+ *         required: true
+ *         description: ID of the event
+ *         schema:
+ *           type: string
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               userId:
+ *                 type: string
+ *                 example: 6611b8b3fe56c23d645fbc3d
+ *     responses:
+ *       200:
+ *         description: User successfully registered for the event
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Participation successful. Confirmation email sent.
+ *       400:
+ *         description: User already participating or invalid input
+ *       404:
+ *         description: Event not found
+ *       500:
+ *         description: Server error
+ */
+router.post("/:eventId/participate", eventController.participateEvent);
+
+/**
+ * @swagger
+ * /events/{eventId}/cancel:
+ *   post:
+ *     summary: Cancel participation in an event
+ *     tags: [Events]
+ *     parameters:
+ *       - in: path
+ *         name: eventId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the event
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               userId:
+ *                 type: string
+ *                 example: 6611b8b3fe56c23d645fbc3d
+ *     responses:
+ *       200:
+ *         description: Participation cancelled successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 message:
+ *                   type: string
+ *                   example: Participation cancelled successfully.
+ *       400:
+ *         description: User is not participating in this event
+ *       404:
+ *         description: Event not found
+ *       500:
+ *         description: Server error
+ */
+router.post("/:eventId/cancel", eventController.cancelParticipation);
+
+// Sync events to Google Calendar
+router.post("/sync", auth, eventController.syncEvents);
+
+// handle Google Calendar CallBack
+router.get("/oauth2callback", eventController.handleCallBack);
+
+router.get('/user/:userId', auth, eventController.getUserEvents);
 
 module.exports = router;

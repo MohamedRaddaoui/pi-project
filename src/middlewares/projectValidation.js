@@ -1,5 +1,6 @@
 const {body,validationResult} = require ("express-validator");
 const mongoose = require("mongoose");
+const User =require("../models/user");
 
 // Middleware to validate MongoDB ObjectId
 exports.validateObjectId = (req, res, next) => {
@@ -21,7 +22,7 @@ exports.validateProject =[
     body("description")
     .notEmpty()
     .withMessage("Description is required")
-    .isLength({min : 200}).withMessage("description name must be at least 200 characters long.")
+    .isLength({min : 100}).withMessage("description name must be at least 100 characters long.")
     .trim(),
 
     body("startDate")
@@ -65,6 +66,25 @@ exports.validateProject =[
        return true;
 
       }),
+      
+      body("ownerID")
+        .optional()
+        .isMongoId()  // Check if  ownerID a valid ObjectId 
+        .withMessage("Invalid owner ID")
+        .custom(async (ownerId) => {
+          const user = await User.findById(ownerId);  // search user
+          if (!user) {
+            throw new Error("User not found");
+          }
+      
+          // check if user is a owner(chef)
+          if (user.role !== "chefProjet") {
+            throw new Error("User must be a 'chef de projet'");
+          }
+      
+          return true; 
+        }),
+      
 
     //   body('ownerID')
     //   .notEmpty().withMessage("Owner ID is required")
@@ -83,32 +103,7 @@ exports.validateProject =[
     .trim()
     .isIn(["Not Started","In Progress", "Done", "Canceled"])
     .withMessage("Invalid Status"),
-
-    //   body('usersID')
-    //   .customSanitizer((value) => value.map((user) => user._id)) // Extract only the user IDs
-    //   .custom(async (users) => {
-    //     if (users.length === 0) {
-    //       throw new Error("At least one user is required");
-    //       }
-    //        // Database verification to check if the users exist
-    // const existingUsers = await User.find({ _id: { $in: users } });
-    // if (existingUsers.length !== users.length) {
-    //   throw new Error("Users not exist");
-    // }
-    //       return true;
-    
-    //  }),
-
-    //  body('tasksID')
-    //  .customSanitizer((value) => value.map((task) => task._id)) // Extract only the user IDs
-    //   .custom(async (tasksID) => {
-    //     if (tasksID.length === 0) {
-    //       throw new Error("At least one user is required");
-    //       }
-    //       return true;
-    
-    //  }),
-     
+  
     
           
 // Check for validation errors

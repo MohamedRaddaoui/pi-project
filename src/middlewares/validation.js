@@ -12,27 +12,41 @@ exports.validateObjectId = (req, res, next) => {
 // Middleware for event validation
 exports.validateEvent = [
   body("title").notEmpty().withMessage("Title is required.").trim(),
+
   body("description").optional().trim(),
+
   body("location").optional().trim(),
 
   body("date")
-    .isISO8601()
+    .notEmpty()
+    .withMessage("Date is required.")
+    .isISO8601({ strict: true })
     .withMessage("Valid date is required.")
-    .customSanitizer((value) => new Date(value)) // Convert to Date object
+    .customSanitizer((value) => {
+      const date = new Date(value);
+      return new Date(date.getFullYear(), date.getMonth(), date.getDate());
+    })
     .custom((date) => {
-      if (date < new Date().setHours(0, 0, 0, 0)) {
+      const today = new Date();
+      const todayMidnight = new Date(
+        today.getFullYear(),
+        today.getMonth(),
+        today.getDate()
+      );
+      if (date < todayMidnight) {
         throw new Error("Date cannot be in the past.");
       }
       return true;
     }),
 
   body("startTime")
+    .notEmpty()
+    .withMessage("Start time is required.")
     .isISO8601()
     .withMessage("Valid start time is required.")
-    .bail()
-    .customSanitizer((value) => new Date(value)) // Convert to Date object
+    .customSanitizer((value) => new Date(value))
     .custom((startTime, { req }) => {
-      const eventDate = new Date(req.body.date).setHours(0, 0, 0, 0);
+      const eventDate = new Date(req.body.date);
       if (startTime < eventDate) {
         throw new Error("Start time must be on or after the event date.");
       }
@@ -40,9 +54,10 @@ exports.validateEvent = [
     }),
 
   body("endTime")
+    .notEmpty()
+    .withMessage("End time is required.")
     .isISO8601()
     .withMessage("Valid end time is required.")
-    .bail()
     .customSanitizer((value) => new Date(value))
     .custom((endTime, { req }) => {
       if (endTime <= new Date(req.body.startTime)) {
@@ -52,7 +67,9 @@ exports.validateEvent = [
     }),
 
   body("type")
-    .isIn(["Meeting", "Appointment", "Deadline", "Event"])
+    .notEmpty()
+    .withMessage("Event type is required.")
+    .isIn(["Meeting", "Appointment", "Event"])
     .withMessage("Invalid event type."),
 
   body("reminder")
@@ -67,7 +84,13 @@ exports.validateEvent = [
       return true;
     }),
 
-  // Check for validation errors
+  body("createdBy")
+    .notEmpty()
+    .withMessage("CreatedBy is required.")
+    .isMongoId()
+    .withMessage("CreatedBy must be a valid user ID."),
+
+  // Final validation error check
   (req, res, next) => {
     const errors = validationResult(req);
     if (!errors.isEmpty()) {

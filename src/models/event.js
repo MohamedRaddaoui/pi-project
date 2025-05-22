@@ -4,7 +4,7 @@ const EventSchema = new mongoose.Schema(
   {
     title: {
       type: String,
-      required: true,
+      required: true, 
       trim: true,
     },
     description: {
@@ -13,12 +13,12 @@ const EventSchema = new mongoose.Schema(
     },
     date: {
       type: Date,
-      required: true,
-      index: true, // Improves query performance
+      required: true, 
+      index: true, 
     },
     startTime: {
       type: Date,
-      required: true,
+      required: true, 
       validate: {
         validator: function (value) {
           return value >= this.date;
@@ -42,8 +42,10 @@ const EventSchema = new mongoose.Schema(
     },
     type: {
       type: String,
-      enum: ["Meeting", "Appointment", "Deadline", "Event"],
-      required: true,
+      enum: ["Meeting", "Appointment", "Event"],
+    },
+    maxAttendees: {
+      type: Number,
     },
     attendees: [
       {
@@ -66,7 +68,7 @@ const EventSchema = new mongoose.Schema(
       trim: true,
     },
     reminder: {
-      type: Date, // Optional field to store reminder notification time
+      type: Date,
     },
     visibility: {
       type: String,
@@ -78,6 +80,18 @@ const EventSchema = new mongoose.Schema(
       enum: ["None", "Daily", "Weekly", "Monthly"],
       default: "None",
     },
+    attachments: [
+      {
+        filename: String,
+        path: String,
+        mimetype: String,
+        originalname: String,
+        uploadedAt: {
+          type: Date,
+          default: Date.now,
+        },
+      },
+    ],
   },
   { timestamps: true }
 );
