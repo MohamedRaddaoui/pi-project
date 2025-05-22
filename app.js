@@ -5,6 +5,7 @@ var logger = require("morgan");
 require("dotenv").config();
 const setupSwagger = require("./swagger");
 const cors = require("cors");
+
 // Importation des tâches cron
 require('./cron/deadlineReminderJob'); // Assure-toi que le chemin est correct
 const corsOptions = {
@@ -25,14 +26,14 @@ var app = express();
 
 // view engine setup
 app.set("view engine", "jade");
-app.use(cors(corsOptions));
-
+app.use(cors());
 app.use(logger("dev"));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 app.use(express.static(path.join(__dirname, "public")));
 app.use(baseUrl + "/", indexRouter);
+app.use('/uploads', express.static('uploads'));
 setupSwagger(app); // Setup Swagger
 app.set("view engine", "twig");
 
