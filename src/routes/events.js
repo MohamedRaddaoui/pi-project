@@ -6,6 +6,7 @@ const {
   validateObjectId,
 } = require("../middlewares/validation");
 const upload = require("../middlewares/upload");
+const auth = require("../middlewares/auth");
 
 /**
  * @swagger
@@ -76,6 +77,7 @@ const upload = require("../middlewares/upload");
 
 router.post(
   "/",
+  auth,
   upload.array("attachments"),
   validateEvent,
   eventController.createEvent
@@ -115,7 +117,7 @@ router.get("/", eventController.getAllEvents);
  *       404:
  *         description: Event not found
  */
-router.get("/:id", validateObjectId, eventController.getEventById);
+router.get("/getEventById/:id", eventController.getEventById);
 
 /**
  * @swagger
@@ -178,9 +180,8 @@ router.get("/:id", validateObjectId, eventController.getEventById);
  */
 
 router.patch(
-  "/:id",
+  "/updateEventById/:id",
   upload.array("attachments"),
-  validateObjectId,
   eventController.updateEvent
 );
 
@@ -204,7 +205,7 @@ router.patch(
  *       404:
  *         description: Event not found
  */
-router.delete("/:id", validateObjectId, eventController.deleteEvent);
+router.delete("/deleteEventById/:id", eventController.deleteEvent);
 
 /**
  * @swagger
@@ -291,5 +292,13 @@ router.post("/:eventId/participate", eventController.participateEvent);
  *         description: Server error
  */
 router.post("/:eventId/cancel", eventController.cancelParticipation);
+
+// Sync events to Google Calendar
+router.post("/sync", auth, eventController.syncEvents);
+
+// handle Google Calendar CallBack
+router.get("/oauth2callback", eventController.handleCallBack);
+
+router.get('/user/:userId', auth, eventController.getUserEvents);
 
 module.exports = router;

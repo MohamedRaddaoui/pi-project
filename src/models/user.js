@@ -13,7 +13,14 @@ const userSchema = new mongoose.Schema({
     type: String,
     required: true,
     unique: true,
-    match: [/^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/, "Please fill a valid email address"],
+    match: [
+      /^[a-zA-Z0-9._-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,4}$/,
+      "Please fill a valid email address",
+    ],
+  },
+  photo: {
+    type: String, // on stocke juste le nom du fichier
+    default: null
   },
   password: {
     type: String,
@@ -33,6 +40,15 @@ const userSchema = new mongoose.Schema({
   },
   twoFACodeExpires: {
     type: Date, // Date d'expiration du code 2FA
+  },
+  googleTokens: {
+    access_token: String,
+    refresh_token: String,
+    scope: String,
+    token_type: String,
+    id_token: String,
+    refresh_token_expires_in: Number,
+    expiry_date: Number,
   },
 });
 
