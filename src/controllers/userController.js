@@ -8,7 +8,9 @@ const sendEmail = require("../../utils/sendEmail");
 
 dotenv.config();
 
+// Ajouter un utilisateur
 async function adduser(req, res) {
+  console.log("File uploaded:", req.file);
   try {
     let { firstname, lastname, email, password, role } = req.body;
 
@@ -16,34 +18,48 @@ async function adduser(req, res) {
     if (existingUser) {
       return res.status(409).json({ message: "Email déjà utilisé" });
     }
+
     role = "user";
     const hashedPassword = await bcrypt.hash(password, 10);
-    const user = new User({
+
+    const userData = {
       firstname,
       lastname,
       email,
       password: hashedPassword,
       role,
-    });
+      isActive: true,
+    };
 
+    if (req.file) {
+      // Sauvegarde le nom du fichier dans le champ photo
+      userData.photo = req.file.filename; 
+      // Ou si tu veux le chemin complet : req.file.path
+    }
+
+    const user = new User(userData);
     await user.save();
-    res.status(201).json({ message: "Utilisateur ajouté avec succès" });
+
+    res.status(201).json({ message: "Utilisateur ajouté avec succès", user });
   } catch (err) {
-    console.log(err);
+    console.error(err);
     res.status(500).json({ error: "Erreur serveur" });
   }
 }
 
+
+// Afficher tous les utilisateurs
 async function showuser(req, res) {
   try {
     const users = await User.find();
     res.status(200).json(users);
   } catch (err) {
-    console.log(err);
+    console.error(err);
     res.status(500).json({ error: "Erreur serveur" });
   }
 }
 
+// Afficher un utilisateur par ID
 async function showById(req, res) {
   try {
     const user = await User.findById(req.params.id);
@@ -52,11 +68,12 @@ async function showById(req, res) {
     }
     res.status(200).json(user);
   } catch (err) {
-    console.log(err);
+    console.error(err);
     res.status(500).json({ error: "Erreur serveur" });
   }
 }
 
+// Supprimer un utilisateur
 async function deleteuser(req, res) {
   try {
     const user = await User.findByIdAndDelete(req.params.id);
@@ -65,29 +82,40 @@ async function deleteuser(req, res) {
     }
     res.status(200).json({ message: "Utilisateur supprimé avec succès" });
   } catch (err) {
-    console.log(err);
+    console.error(err);
     res.status(500).json({ error: "Erreur serveur" });
   }
 }
 
+// Mettre à jour un utilisateur
 async function updateuser(req, res) {
   try {
-    const { firstname, lastname, email, role } = req.body;
+    const { firstname, lastname, email, role, isActive } = req.body;
+    const updateData = { firstname, lastname, email, role, isActive };
+
+    // Si un fichier photo est uploadé, ajouter son nom au updateData
+    if (req.file) {
+      updateData.photo = req.file.filename; // ou req.file.path selon ce que tu stockes
+    }
+
     const user = await User.findByIdAndUpdate(
       req.params.id,
-      { firstname, lastname, email, role },
+      updateData,
       { new: true }
     );
+
     if (!user) {
       return res.status(404).json({ error: "Utilisateur non trouvé" });
     }
+
     res.status(200).json(user);
   } catch (err) {
-    console.log(err);
+    console.error(err);
     res.status(500).json({ error: "Erreur serveur" });
   }
 }
 
+// Connexion utilisateur avec 2FA
 async function login(req, res) {
   const { email, password } = req.body;
 
@@ -97,7 +125,7 @@ async function login(req, res) {
       return res.status(404).json({ error: "Email non trouvé" });
     }
 
-    if (user.status === "inactive") {
+    if (!user.isActive) {
       return res.status(403).json({ error: "Compte inactif" });
     }
 
@@ -135,6 +163,7 @@ async function login(req, res) {
   }
 }
 
+// Vérification du code 2FA
 async function verify2FA(req, res) {
   const { email, code } = req.body;
 
@@ -151,17 +180,16 @@ async function verify2FA(req, res) {
       return res.status(400).json({ error: "Code incorrect" });
     }
 
-    // Vérifier si le code est expiré
     if (user.twoFACodeExpires < new Date()) {
       return res.status(400).json({ error: "Code expiré" });
     }
 
-    // Supprimer le code 2FA une fois validé
+    // Supprimer le code après validation
     user.twoFACode = undefined;
     user.twoFACodeExpires = undefined;
     await user.save();
 
-    // Générer un token JWT pour l'utilisateur
+    // Générer un token JWT
     const token = jwt.sign(
       { userId: user._id, email: user.email, role: user.role },
       process.env.JWT_SECRET,
@@ -173,6 +201,7 @@ async function verify2FA(req, res) {
       token,
     });
   } catch (err) {
+    console.error(err);
     res.status(500).json({ error: "Erreur serveur" });
   }
 }
@@ -182,15 +211,15 @@ const logout = (req, res) => {
   return res.status(200).json({ message: "Déconnexion réussie" });
 };
 
-// Réinitialisation de mot de passe
-
-const forgotPassword = async (req, res) => {
+// Réinitialisation de mot de passe - envoyer email
+async function forgotPassword(req, res) {
   const { email } = req.body;
 
   try {
     const user = await User.findOne({ email });
-    if (!user)
+    if (!user) {
       return res.status(404).json({ message: "Utilisateur non trouvé" });
+    }
 
     const token = jwt.sign({ id: user._id }, process.env.JWT_SECRET, {
       expiresIn: "15m",
@@ -213,10 +242,10 @@ const forgotPassword = async (req, res) => {
     console.error(err);
     res.status(500).json({ message: "Erreur serveur" });
   }
-};
+}
 
-// 2. Mettre à jour le mot de passe avec le token (fonction déjà ajoutée)
-const resetPassword = async (req, res) => {
+// Réinitialisation de mot de passe - modifier
+async function resetPassword(req, res) {
   const { token } = req.params;
   const { newPassword } = req.body;
 
@@ -224,12 +253,11 @@ const resetPassword = async (req, res) => {
     const decoded = jwt.verify(token, process.env.JWT_SECRET);
     const hashedPassword = await bcrypt.hash(newPassword, 10);
 
-    await User.findByIdAndUpdate(decoded.id, {
-      password: hashedPassword,
-    });
+    await User.findByIdAndUpdate(decoded.id, { password: hashedPassword });
 
     res.json({ message: "Mot de passe mis à jour avec succès !" });
   } catch (err) {
+    console.error(err);
     res.status(400).json({ message: "Token invalide ou expiré" });
   }
 };
