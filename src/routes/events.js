@@ -293,12 +293,49 @@ router.post("/:eventId/participate", eventController.participateEvent);
  */
 router.post("/:eventId/cancel", eventController.cancelParticipation);
 
+/**
+ * @swagger
+ * /events/{eventId}/add-participants:
+ *   post:
+ *     summary: Add participants to an event
+ *     tags: [Events]
+ *     parameters:
+ *       - in: path
+ *         name: eventId
+ *         required: true
+ *         schema:
+ *           type: string
+ *         description: ID of the event
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             properties:
+ *               participants:
+ *                 type: array
+ *                 items:
+ *                   type: string
+ *                 example: ["user1", "user2"]
+ *     responses:
+ *       200:
+ *         description: Participants added successfully
+ *       400:
+ *         description: Invalid input
+ *       404:
+ *         description: Event not found
+ *       500:
+ *         description: Server error
+ */
+router.post("/:eventId/add-participants", eventController.addParticipants);
+
 // Sync events to Google Calendar
 router.post("/sync", auth, eventController.syncEvents);
 
 // handle Google Calendar CallBack
 router.get("/oauth2callback", eventController.handleCallBack);
 
-router.get('/user/:userId', auth, eventController.getUserEvents);
+router.get("/user/:userId", auth, eventController.getUserEvents);
 
 module.exports = router;
