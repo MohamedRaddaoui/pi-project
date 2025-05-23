@@ -6,7 +6,6 @@ const projectRoutes = require("./project");
 const taskCommentRoutes = require("./Task/taskComment");
 const qaRoutes = require("./qa.routes");
 const taskRoutes = require("./Task/tasks");
-const forumRoutes = require("./forums");
 const chatbotAPI = require("../config/open-ai");
 const backlogRoutes = require("./productBacklog");
 const sprintProductRoutes = require("./sprintProduct");
@@ -28,8 +27,6 @@ router.use("/taskcomments", taskCommentRoutes);
 // Use Q&A routes
 router.use("/qa", qaRoutes);
 
-// Use forum routes
-router.use("/forum", forumRoutes);
 // Use backlog routes
 router.use("/backlog", backlogRoutes);
 // Use sprint product routes
