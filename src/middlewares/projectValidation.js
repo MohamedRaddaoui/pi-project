@@ -22,7 +22,7 @@ exports.validateProject =[
     body("description")
     .notEmpty()
     .withMessage("Description is required")
-    .isLength({min : 100}).withMessage("description name must be at least 100 characters long.")
+    .isLength({min : 30}).withMessage("description name must be at least  30 characters long.")
     .trim(),
 
     body("startDate")

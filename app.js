@@ -1,13 +1,16 @@
 var express = require("express");
 var path = require("path");
 var cookieParser = require("cookie-parser");
+var cors=require("cors");
 var logger = require("morgan");
 require("dotenv").config();
 const setupSwagger = require("./swagger");
-const cors = require("cors");
 
 // Importation des tâches cron
-require("./cron/deadlineReminderJob"); // Assure-toi que le chemin est correct
+require("./cron/deadlineReminderJob");  // Assure-toi que le chemin est correct
+
+require("./cron/exportProjectSummary");
+
 const corsOptions = {
     origin: "*", // Attention: à modifier en production
     methods: ["GET", "POST", "PUT", "DELETE", "OPTIONS"],
@@ -38,5 +41,6 @@ app.set("view engine", "twig");
 
 // Indiquer le dossier contenant les vues
 app.set("views", path.join(__dirname, "views"));
+
 
 module.exports = app;
