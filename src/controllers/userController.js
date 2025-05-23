@@ -262,6 +262,20 @@ async function resetPassword(req, res) {
   }
 };
 
+async function getUserByEmail(req, res) {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ error: "Utilisateur non trouvé" });
+    }
+    res.status(200).json(user);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+}
+
 module.exports = {
   adduser,
   showuser,
@@ -273,5 +287,5 @@ module.exports = {
   logout,
   forgotPassword,
   resetPassword,
-
+  getUserByEmail,
 };

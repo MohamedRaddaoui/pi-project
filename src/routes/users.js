@@ -30,4 +30,6 @@ router.post("/adduser", upload.single('photo'), userController.adduser);
 router.put("/updateuser/:id", upload.single("photo"), userController.updateuser);
 
 
+router.post("/find-by-email", userController.getUserByEmail);
+
 module.exports = router;
