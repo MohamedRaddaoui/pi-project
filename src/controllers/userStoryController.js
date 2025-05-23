@@ -1,6 +1,6 @@
-const productBacklog = require('../models/productBacklog');
-const UserStory = require('../models/userStory');
-const mongoose = require('mongoose')
+const productBacklog = require("../models/productBacklog");
+const UserStory = require("../models/userStory");
+const mongoose = require("mongoose");
 
 // 
 
@@ -12,7 +12,7 @@ const createUserStory = async (req, res) => {
       return res.status(400).json({ message: "Le backlog est requis et doit être valide" });
     }
 
-    const mongoose = require('mongoose');
+    const mongoose = require("mongoose");
     if (!mongoose.Types.ObjectId.isValid(backlogID)) {
       return res.status(400).json({ message: "Le backlogID n'est pas un ObjectId valide" });
     }
@@ -85,17 +85,17 @@ const getAllUserStories = async (req, res) => {
   };
 
 
-async function filterUserStories(req, res){
-  try {
-    const filter = {};
-    if (req.query.sprintID) filter.sprintID = req.query.sprintID;
-    if (req.query.assignedTo) filter.assignedTo = req.query.assignedTo;
-    const stories = await UserStory.find(filter);
-    res.json(stories);
-  } catch (err) {
-    res.status(500).json({ message: err.message });
-  }
-};
+// async function filterUserStories(req, res){
+//   try {
+//     const filter = {};
+//     if (req.query.sprintID) filter.sprintID = req.query.sprintID;
+//     if (req.query.assignedTo) filter.assignedTo = req.query.assignedTo;
+//     const stories = await UserStory.find(filter);
+//     res.json(stories);
+//   } catch (err) {
+//     res.status(500).json({ message: err.message });
+//   }
+// };
 
 
 async function getStoryStats (req, res){
@@ -159,15 +159,15 @@ async function removeUserStoryFromSprint(req, res) {
     const userStory = await UserStory.findById(req.params.id);
 
     if (!userStory) {
-      return res.status(404).json({ message: 'User story not found' });
+      return res.status(404).json({ message: "User story not found" });
     }
 
     userStory.sprintId = null;
     await userStory.save();
 
-    res.status(200).json({ message: 'User story removed from sprint successfully' });
+    res.status(200).json({ message: "User story removed from sprint successfully" });
   } catch (error) {
-    res.status(500).json({ message: 'Server error', error });
+    res.status(500).json({ message: "Server error", error });
   }
 };
 
@@ -203,11 +203,11 @@ async function filterUserStories (req, res){
     if (req.query.status) query.status = req.query.status;
     if (req.query.priority) query.priority = req.query.priority;
 
-    const stories = await UserStory.find(query).populate('assignedTo sprintID');
+    const stories = await UserStory.find(query).populate("assignedTo sprintID");
     res.json(stories);
   } catch (err) {
     res.status(500).json({ message: err.message });
   }
 };
 
-module.exports={createUserStory,getAllUserStories,updateUserStory,deleteUserStory,filterUserStories,getStoryStats,assignUser,unassignUser,getUserStoriesBySprint,getUserStoriesByBacklog,removeUserStoryFromSprint,getTotalStoryPoints,filterUserStories}
+module.exports={createUserStory,getAllUserStories,updateUserStory,deleteUserStory,filterUserStories,getStoryStats,assignUser,unassignUser,getUserStoriesBySprint,getUserStoriesByBacklog,removeUserStoryFromSprint,getTotalStoryPoints,filterUserStories};

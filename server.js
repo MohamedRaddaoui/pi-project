@@ -3,7 +3,7 @@ const socketIo = require("socket.io");
 const app = require("./app"); // Express app
 const connectDB = require("./src/config/config"); // DB connection
 
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 5000;
 
 // Connexion à MongoDB
 connectDB();

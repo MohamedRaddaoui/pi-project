@@ -1,6 +1,6 @@
 const {body,validationResult} = require ("express-validator");
 const mongoose = require("mongoose");
-const User =require('../models/user');
+const User =require("../models/user");
 
 // Middleware to validate MongoDB ObjectId
 exports.validateObjectId = (req, res, next) => {
@@ -41,13 +41,13 @@ exports.validateProject =[
 
           if (startDate < today) {  // checks if startDate is not in the past 
            throw new Error("Start date must not be in the past.");
-          }
+                                 }
          if (startDate >= endDate) { // checks if startDate is greater than or equal to endDate
-             throw new Error("Start date must be before the end date.");
-         }
+              throw new Error("Start date must be before the end date.");
+                                   }
          return true;
 
-     }),
+                                  }),
     body("endDate")
     .notEmpty().withMessage("End date is required")
     .isISO8601()  // Checks if startDate follows the ISO 8601 format.
@@ -67,7 +67,7 @@ exports.validateProject =[
 
       }),
       
-      body('ownerID')
+      body("ownerID")
         .optional()
         .isMongoId()  // Check if  ownerID a valid ObjectId 
         .withMessage("Invalid owner ID")
@@ -86,14 +86,23 @@ exports.validateProject =[
         }),
       
 
+    //   body('ownerID')
+    //   .notEmpty().withMessage("Owner ID is required")
+    //   .isMongoId() // Checks if ownerId is a valid MongoDB ObjectId
+    //   .withMessage("Invalid owner ID")
+    //   .customSanitizer((value)=> value.map((user) => user._id))
+    //   .custom(async (ownerId) => {
+    //   const existingOwnerId = await User.find({ _id: { $in: ownerId } });
+    //   if (existingOwnerId.length !== users.length) {
+    //     throw new Error("User not exist");
+    //   }
+    // }),
+
     body("status")
     .optional()
     .trim()
     .isIn(["Not Started","In Progress", "Done", "Canceled"])
     .withMessage("Invalid Status"),
-
-
-  
   
     
           
@@ -105,12 +114,5 @@ exports.validateProject =[
     }
     next();
   },
-
-
-
-    
-
-
-    
 ];
 
