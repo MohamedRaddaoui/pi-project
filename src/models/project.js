@@ -60,9 +60,13 @@ const Project=new Schema({
         trim: true,
         enum: ['Kanban','Scrum'],
         default:'Kanban'
+    },
+    
+
+  created_by:{
+       type: mongoose.Schema.ObjectId, 
+        ref : "User", 
     }
-
-
 })
 
 // 📌 Add a virtual field to retrieve the associated tasks

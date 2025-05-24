@@ -1,13 +1,16 @@
 const Project = require("../models/project");
 const Task = require("../models/Task/task");
+const User = require("../models/user");
 
 
 
 // 📌 Create new Project
 async function createProject(req, res){
     try{
-        
-        const project = new Project (req.body);
+        const userId = req.user._id;
+        const project = new Project ({
+          ...req.body,
+          created_by : userId});
         console.log(req.body) 
         await project.save();
          res.status(201).json({message:"Project created successfully", project:project});
@@ -63,7 +66,8 @@ async function getProjectByID(req,res){
         .populate("tasksID")
         .populate("usersID")
         .populate("ownerID")
-        .populate("sprintsID");
+        .populate("sprintsID")
+        .populate("created_by");
         if (!project) return res.status(400).json({"message":"Project not found"});
 
         res.status(200).json(project);
