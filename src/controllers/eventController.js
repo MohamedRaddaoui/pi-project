@@ -327,7 +327,7 @@ exports.addParticipants = async (req, res) => {
               <p>Event Description:</p>
               <p>${event.description || "No description provided."}</p>
               <p>Check your calendar for more details: </p>
-              <p><a href="${event.link || "http://localhsot:4200/calendar"}">Calendar Link</a></p>
+              <p><a href="${event.link || "http://localhost:4200/calendar"}">Calendar Link</a></p>
               <p>If you have any questions, feel free to reach out.</p>
               <p>See you there!</p>
             </div>
