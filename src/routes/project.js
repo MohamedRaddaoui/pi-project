@@ -6,9 +6,10 @@ const {
     validateObjectId,
 
 }= require("../middlewares/projectValidation");
+const auth = require("../middlewares/auth");
 
 // 📌 Add new project
-router.post("/addProject",validateProject,projectCtrl.createProject);  
+router.post("/addProject",auth,validateProject,projectCtrl.createProject);  
 // 📌 Show project by ID
 router.get("/projectByID/:id",validateObjectId,projectCtrl.getProjectByID); 
 // 📌 Show all Project
@@ -39,6 +40,7 @@ router.get("/sumTask/:id",projectCtrl.getProjectTaskSummary)
 router.get('/search',projectCtrl.searchProjects)
 
 router.get('/checkProjectOverdue/:id',projectCtrl.checkProjectOverdue)
+router.get('/getArchProjectUser/:id',projectCtrl.getArchivedProjectByUser)
 
 
 
