@@ -32,15 +32,15 @@ const QuestionSchema = new Schema({
   tags: [{ type: String, trim: true }],
   views: { type: Number, default: 0 },
   sentiment: {
-    score: { type: Number, default: 0 },  // Overall sentiment score
-    comparative: { type: Number, default: 0 },  // Normalized sentiment score
-    tokens: [String],  // Words that contributed to sentiment
-    positive: [String],  // Positive words found
-    negative: [String],  // Negative words found
+    score: { type: Number, default: 0 },
+    comparative: { type: Number, default: 0 },
+    tokens: [String],
+    positive: [String],
+    negative: [String],
   },
-  frequency: { type: Number, default: 1 },  // How many times similar questions were asked
-  lastAnalyzed: { type: Date },  // When the sentiment was last analyzed
-  googleSheetId: { type: String },  // Reference to Google Sheet entry
+  frequency: { type: Number, default: 1 },
+  lastAnalyzed: { type: Date },
+  googleSheetId: { type: String },
   createdAt: { type: Date, default: Date.now },
   updatedAt: { type: Date, default: Date.now }
 });
@@ -51,6 +51,10 @@ QuestionSchema.virtual("answers", {
   localField: "_id",
   foreignField: "questionId"
 });
+
+// Enable virtuals in toJSON
+QuestionSchema.set('toJSON', { virtuals: true });
+QuestionSchema.set('toObject', { virtuals: true });
 
 // Middleware for vote score calculation
 QuestionSchema.pre("save", function(next) {
@@ -67,10 +71,10 @@ AnswerSchema.pre("save", function(next) {
   next();
 });
 
-// Create and export models
-const Question = mongoose.model("Question", QuestionSchema);
-const Answer = mongoose.model("Answer", AnswerSchema);
-const Reply = mongoose.model("Reply", ReplySchema);
+// Create and export models with explicit collection names
+const Question = mongoose.model("Question", QuestionSchema, "questions");
+const Answer = mongoose.model("Answer", AnswerSchema, "answers");
+const Reply = mongoose.model("Reply", ReplySchema, "replies");
 
 module.exports = {
   Question,

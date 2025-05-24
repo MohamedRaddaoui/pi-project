@@ -1,9 +1,11 @@
+const mongoose = require('mongoose');
 const { Question, Answer } = require("../models/qa.model");
 
-// Question Controllers
 exports.createQuestion = async (req, res) => {
   try {
     const { title, content, author, tags } = req.body;
+    console.log('MongoDB connected to:', mongoose.connection.name);
+    console.log('Creating question:', { title, content, author, tags });
     const question = new Question({
       title,
       content,
@@ -11,8 +13,10 @@ exports.createQuestion = async (req, res) => {
       tags: tags || []
     });
     await question.save();
+    console.log('Question saved:', question);
     res.status(201).json(question);
   } catch (error) {
+    console.error('Create question error:', error);
     res.status(400).json({ error: error.message });
   }
 };
@@ -20,8 +24,9 @@ exports.createQuestion = async (req, res) => {
 exports.getQuestions = async (req, res) => {
   try {
     const { sort = "newest" } = req.query;
+    console.log('MongoDB connected to:', mongoose.connection.name);
+    console.log('Fetching questions with sort:', sort);
     let sortOptions = {};
-    
     switch (sort) {
       case "newest":
         sortOptions = { createdAt: -1 };
@@ -46,19 +51,58 @@ exports.getQuestions = async (req, res) => {
           },
           {
             $sort: { createdAt: -1 }
+          },
+          {
+            $project: {
+              title: 1,
+              content: 1,
+              author: 1,
+              tags: 1,
+              upvotes: 1,
+              downvotes: 1,
+              voteScore: 1,
+              views: 1,
+              createdAt: 1,
+              answerCount: { $size: "$answers" }
+            }
           }
         ]);
+        console.log('Unanswered questions fetched:', unansweredQuestions);
         return res.status(200).json(unansweredQuestions);
       default:
         sortOptions = { createdAt: -1 };
     }
-    
-    const questions = await Question.find()
-      .sort(sortOptions)
-      .populate("author", "firstName lastName email");
-    
+    const questions = await Question.aggregate([
+      {
+        $lookup: {
+          from: "answers",
+          localField: "_id",
+          foreignField: "questionId",
+          as: "answers"
+        }
+      },
+      {
+        $project: {
+          title: 1,
+          content: 1,
+          author: 1,
+          tags: 1,
+          upvotes: 1,
+          downvotes: 1,
+          voteScore: 1,
+          views: 1,
+          createdAt: 1,
+          answerCount: { $size: "$answers" }
+        }
+      },
+      {
+        $sort: sortOptions
+      }
+    ]);
+    console.log('Questions fetched:', questions);
     res.status(200).json(questions);
   } catch (error) {
+    console.error('Get questions error:', error);
     res.status(500).json({ error: error.message });
   }
 };
@@ -66,26 +110,39 @@ exports.getQuestions = async (req, res) => {
 exports.getQuestionById = async (req, res) => {
   try {
     const question = await Question.findById(req.params.questionId)
-      .populate("author", "firstName lastName email")
-      .populate({
-        path: "answers",
-        populate: [
-          { path: "author", select: "firstName lastName email" },
-          {
-            path: "replies",
-            populate: { path: "author", select: "firstName lastName email" }
-          }
-        ]
-      });
+      .lean({ virtuals: true });
     
     if (!question) {
       return res.status(404).json({ message: "Question not found" });
     }
     
-    question.views += 1;
-    await question.save();
+    await Question.findByIdAndUpdate(req.params.questionId, { $inc: { views: 1 } });
+    
+    const answers = await Answer.find({ questionId: req.params.questionId })
+      .populate("author", "firstName lastName email")
+      .populate({
+        path: "replies",
+        populate: { path: "author", select: "firstName lastName email" }
+      });
+    
+    question.answers = answers;
     
     res.status(200).json(question);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.getAnswers = async (req, res) => {
+  try {
+    const answers = await Answer.find({ questionId: req.params.questionId })
+      .populate("author", "firstName lastName email")
+      .populate({
+        path: "replies",
+        populate: { path: "author", select: "firstName lastName email" }
+      });
+    
+    res.status(200).json(answers);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }
@@ -120,7 +177,6 @@ exports.deleteQuestion = async (req, res) => {
       return res.status(404).json({ message: "Question not found" });
     }
     
-    // Delete all associated answers and replies
     await Answer.deleteMany({ questionId: question._id });
     await question.remove();
     
@@ -130,7 +186,6 @@ exports.deleteQuestion = async (req, res) => {
   }
 };
 
-// Vote Controllers
 exports.voteQuestion = async (req, res) => {
   try {
     const { userId, voteType } = req.body;
@@ -163,10 +218,13 @@ exports.voteQuestion = async (req, res) => {
   }
 };
 
-// Answer Controllers
 exports.createAnswer = async (req, res) => {
   try {
     const { content, author } = req.body;
+    const question = await Question.findById(req.params.questionId);
+    if (!question) {
+      return res.status(404).json({ message: "Question not found" });
+    }
     const answer = new Answer({
       content,
       author,
@@ -218,11 +276,9 @@ exports.voteAnswer = async (req, res) => {
   try {
     const { userId, voteType } = req.body;
     const answer = await Answer.findById(req.params.answerId);
-    
     if (!answer) {
       return res.status(404).json({ message: "Answer not found" });
     }
-    
     if (voteType === "up") {
       if (answer.upvotes.includes(userId)) {
         answer.upvotes = answer.upvotes.filter(id => id.toString() !== userId);
@@ -238,7 +294,6 @@ exports.voteAnswer = async (req, res) => {
         answer.upvotes = answer.upvotes.filter(id => id.toString() !== userId);
       }
     }
-    
     await answer.save();
     res.status(200).json(answer);
   } catch (error) {
@@ -250,51 +305,39 @@ exports.acceptAnswer = async (req, res) => {
   try {
     const { questionAuthorId } = req.body;
     const answer = await Answer.findById(req.params.answerId);
-    
     if (!answer) {
       return res.status(404).json({ message: "Answer not found" });
     }
-    
     const question = await Question.findById(answer.questionId);
-    
     if (question.author.toString() !== questionAuthorId) {
       return res.status(403).json({ message: "Only the question author can accept an answer" });
     }
-    
-    // Reset all other answers to not accepted
     await Answer.updateMany(
       { questionId: answer.questionId },
       { isAccepted: false }
     );
-    
     answer.isAccepted = true;
     await answer.save();
-    
     res.status(200).json(answer);
   } catch (error) {
     res.status(400).json({ error: error.message });
   }
 };
 
-// Reply Controllers
 exports.createReply = async (req, res) => {
   try {
     const { content, author } = req.body;
     const answer = await Answer.findById(req.params.answerId);
-    
     if (!answer) {
       return res.status(404).json({ message: "Answer not found" });
     }
-    
     const reply = {
       content,
       author,
       answerId: answer._id
     };
-    
     answer.replies.push(reply);
     await answer.save();
-    
     const newReply = answer.replies[answer.replies.length - 1];
     res.status(201).json(newReply);
   } catch (error) {
@@ -306,15 +349,12 @@ exports.updateReply = async (req, res) => {
   try {
     const { content } = req.body;
     const answer = await Answer.findOne({ "replies._id": req.params.replyId });
-    
     if (!answer) {
       return res.status(404).json({ message: "Reply not found" });
     }
-    
     const reply = answer.replies.id(req.params.replyId);
     reply.content = content;
     reply.updatedAt = Date.now();
-    
     await answer.save();
     res.status(200).json(reply);
   } catch (error) {
@@ -325,14 +365,11 @@ exports.updateReply = async (req, res) => {
 exports.deleteReply = async (req, res) => {
   try {
     const answer = await Answer.findOne({ "replies._id": req.params.replyId });
-    
     if (!answer) {
       return res.status(404).json({ message: "Reply not found" });
     }
-    
     answer.replies.id(req.params.replyId).remove();
     await answer.save();
-    
     res.status(200).json({ message: "Reply deleted successfully" });
   } catch (error) {
     res.status(500).json({ error: error.message });
