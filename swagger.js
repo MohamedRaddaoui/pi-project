@@ -12,8 +12,14 @@ const swaggerOptions = {
     },
     servers: [
       {
-        url: process.env.BASE_URL || "http://localhost:5000/api",
+        url: "{baseUrl}",
         description: "Development Server",
+        variables: {
+          baseUrl: {
+            default: "/api",
+            description: "Base URL for the API",
+          },
+        },
       },
     ],
     components: {
@@ -363,6 +369,13 @@ const swaggerOptions = {
           },
         },
       },
+      securitySchemes: {
+        BearerAuth: {
+          type: "http",
+          scheme: "bearer",
+          bearerFormat: "JWT"
+        }
+      }
     },
     security: [{ BearerAuth: [] }],
   },
@@ -373,7 +386,13 @@ const swaggerSpec = swaggerJsdoc(swaggerOptions);
 
 const setupSwagger = (app) => {
   app.use("/api/docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
-  console.log("📄 Swagger Docs available at: http://localhost:5000/api/docs");
+  if (process.env.NODE_ENV !== "test") {
+    // Only log in non-test environments
+    app.get("/api/docs", (req, res, next) => {
+      req.logger?.info("Swagger documentation accessed");
+      next();
+    });
+  }
 };
 
 module.exports = setupSwagger;

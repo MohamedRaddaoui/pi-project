@@ -4,3 +4,5 @@ coverage/
 .gitingore
 reports/
 cypress/
+environment/
+.env
