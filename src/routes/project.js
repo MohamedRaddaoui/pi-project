@@ -40,6 +40,7 @@ router.get("/sumTask/:id",projectCtrl.getProjectTaskSummary)
 router.get('/search',projectCtrl.searchProjects)
 
 router.get('/checkProjectOverdue/:id',projectCtrl.checkProjectOverdue)
+router.get('/getArchProjectUser/:id',projectCtrl.getArchivedProjectByUser)
 
 
 
