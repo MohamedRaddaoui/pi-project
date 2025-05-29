@@ -34,7 +34,7 @@ async function getAllProductBacklogs (req, res){
 // Récupérer un ProductBacklog spécifique
 async function getProductBacklogById(req, res){
     try {
-        const productBacklog = await ProductBacklog.findById(req.params.id).populate('projectID.title').populate('userStoriesId.title');
+        const productBacklog = await ProductBacklog.findById(req.params.id).populate('projectID').populate('userStoriesId');
         if (!productBacklog) {
             return res.status(404).json({ message: 'Product Backlog not found' });
         }
