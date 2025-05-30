@@ -23,7 +23,9 @@ async function getAllProject(req, res) {
     // Étape 1 : Récupération initiale
     const projects = await Project.find({ archived: false }).select(
       "title description category status startDate endDate type"
-    );
+    ).populate('usersID') // Populate les utilisateurs membres
+    .populate('created_by') // Populate le créateur
+    .populate('ownerID'); // Populate le projectManager;
 
     if (!projects || projects.length === 0) {
       return res.status(404).json({ message: "No projects found" });
@@ -63,39 +65,57 @@ async function getAllProject(req, res) {
 // 📌 Get Project by ID
 async function getProjectByID(req, res) {
   try {
+  
+
+    // Appel de la méthode de mise à jour du statut
+    const updateResult = await updateProjectStatus(req.params.id);
+
+    // Récupération du projet à jour après modification du statut
     const project = await Project.findById(req.params.id)
       .populate("tasksID")
       .populate("usersID")
       .populate("ownerID")
       .populate("sprintsID")
       .populate("created_by");
+
     if (!project) return res.status(400).json({ message: "Project not found" });
 
-    res.status(200).json(project);
+    // Ajout du message de mise à jour dans la réponse
+    res.status(200).json({ project, statusUpdate: updateResult });
   } catch (err) {
-    res.status(500).json({ error: err.message });
     res.status(500).json({ error: err.message });
   }
 }
 
-// 📌 Update Project
+
+
 // 📌 Update Project
 async function updateProject(req, res) {
   try {
+    // Mise à jour des informations du projet
     const project = await Project.findByIdAndUpdate(req.params.id, req.body, {
       new: true,
     });
-    if (!project) return res.status(400).json({ message: "Project not found" });
-    res
-      .status(200)
-      .json({ message: "Project updated successfully", project: project });
+
+    if (!project) {
+      return res.status(400).json({ message: "Project not found" });
+    }
+
+    // Appel de la méthode de mise à jour du statut
+    const statusUpdateResult = await updateProjectStatus(project._id);
+
+    res.status(200).json({
+      message: "Project updated successfully",
+      project: project,
+      statusUpdate: statusUpdateResult,
+    });
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 }
 
-// 📌 Delete a project
 
+// 📌 Delete a project
 async function deleteProjectAndTasks(req, res) {
   try {
     const { id: projectId } = req.params;
@@ -140,7 +160,7 @@ async function assignUserToProject(req, res) {
     let updated = false;
     let messages = [];
 
-    if (userType === "Manager") {
+    if (userType === "ProjectManager") {
       if (project.ownerID) {
         return res
           .status(400)
@@ -186,7 +206,10 @@ async function getProjectByUser(req, res) {
         { created_by: req.params.id },
         { usersID: { $in: [req.params.id] } },
       ],
-    });
+    })
+    .populate('usersID') // Populate les utilisateurs membres
+    .populate('created_by') // Populate le créateur
+    .populate('ownerID') ;
     res.status(200).json(project);
   } catch (err) {
     res.status(500).json({ error: err.message });
@@ -213,7 +236,10 @@ async function removeMemberFromProject(req, res) {
 // 📌 Archived Project
 async function archiveProject(req, res) {
   try {
-    const project = await Project.findById(req.params.id);
+    const project = await Project.findById(req.params.id)
+    .populate('usersID') // Populate les utilisateurs membres
+    .populate('created_by') // Populate le créateur
+    .populate('ownerID'); // Populate le projectManager;
     if (!project) return res.status(404).json({ message: "Project not found" });
 
     project.archived = true;
@@ -227,13 +253,17 @@ async function archiveProject(req, res) {
 // 📌 Get All Project archived
 async function getAllArchivedProject(req, res) {
   try {
-    const project = await Project.find({ archived: true });
+    const project = await Project.find({ archived: true })
+    .populate('usersID') // Populate les utilisateurs membres
+    .populate('created_by') // Populate le créateur
+    .populate('ownerID'); // Populate le projectManager;
     if (!project) return res.status(404).json({ message: "Project not found" });
     res.status(200).json(project);
   } catch (err) {
     res.status(500).json({ error: err.message });
   }
 }
+
 async function getArchivedProjectByUser(req, res) {
   try {
     const project = await Project.find({
@@ -242,7 +272,12 @@ async function getArchivedProjectByUser(req, res) {
         { usersID: { $in: [req.params.id] } },
       ],
       archived: true,
-    });
+    })
+    .populate('usersID') // Populate les utilisateurs membres
+    .populate('created_by') // Populate le créateur
+    .populate('ownerID') ;// Populate owner
+    
+
     if (!project) return res.status(404).json({ message: "Project not found" });
     res.status(200).json(project);
   } catch (err) {
@@ -269,82 +304,147 @@ async function restoreProject(req, res) {
 
 // 📌 Update  status Project
 
-const updateProjectStatus = async (projectId) => {
+const updateProjectStatus = async (projectId, forceStatus = null) => {
   try {
-    // Recherche du projet par son ID
     const project = await Project.findById(projectId);
     if (!project) {
-      console.error("Project not found.");
       return { updated: false, message: "Project not found." };
     }
 
-    // Récupération de toutes les tâches liées au projet
-    const tasks = await Task.find({ projectId: projectId });
+    // Empêche d'écraser manuellement le statut "Canceled"
+    if (project.status === "Canceled" && !forceStatus) {
+      return {
+        updated: false,
+        message: "Project is already canceled. Status not changed.",
+      };
+    }
 
-    // Dates importantes pour la logique
+    // Si l'utilisateur veut forcer le statut vers "Canceled"
+    if (forceStatus === "Canceled") {
+      if (project.status !== "Canceled") {
+        await Project.findByIdAndUpdate(projectId, { status: "Canceled" });
+        return { updated: true, message: "Project manually set to Canceled." };
+      } else {
+        return { updated: false, message: "Project already canceled." };
+      }
+    }
+
+    // Logique automatique
+    const tasks = await Task.find({ projectId: projectId });
     const today = new Date();
     const startDate = new Date(project.startDate);
     const endDate = new Date(project.endDate);
 
-    // Initialisation par défaut du statut
     let newStatus = "Not Started";
     let message = "Default status applied: Not Started.";
 
-    // Si le projet contient des tâches
     if (tasks.length > 0) {
-      // Vérifie s'il existe au moins une tâche "In Progress"
       const hasInProgressTask = tasks.some(
         (task) => task.status === "In Progress"
       );
-
-      // Vérifie si toutes les tâches sont "Done"
       const allTasksCompleted = tasks.every((task) => task.status === "Done");
 
-      // Si au moins une tâche est "In Progress" mais que la date de début du projet n'est pas encore arrivée
       if (hasInProgressTask && today < startDate) {
         newStatus = "Not Started";
         message =
           "Project has In Progress tasks but has not reached start date.";
-      }
-
-      // Si une tâche est "In Progress" et que la date de début est aujourd'hui ou passée
-      else if (hasInProgressTask && today >= startDate) {
+      } else if (hasInProgressTask && today >= startDate) {
         newStatus = "In Progress";
         message = "Project is now In Progress.";
       }
 
-      // Si toutes les tâches sont terminées
       if (allTasksCompleted) {
         newStatus = "Done";
         message = "All tasks completed: Project marked as Done.";
       }
     }
 
-    // Si le projet n'est ni "Done" ni "Canceled" et que la date de fin est dépassée
     if (newStatus !== "Done" && newStatus !== "Canceled" && today > endDate) {
       newStatus = "Overdue";
       message = "Project is overdue.";
     }
 
-    // Si le statut a changé, on le met à jour en base de données
     if (project.status !== newStatus) {
       await Project.findByIdAndUpdate(projectId, { status: newStatus });
-      console.log(`Project ${projectId} updated to ${newStatus}`);
       return { updated: true, message };
     } else {
-      // Aucun changement nécessaire
-      console.log(`Project ${projectId} status unchanged (${newStatus})`);
       return { updated: false, message: `Status unchanged: ${newStatus}` };
     }
   } catch (error) {
-    // Gestion des erreurs éventuelles
-    console.error("Error updating project status:", error);
     return {
       updated: false,
       message: "Error occurred while updating project status.",
     };
   }
 };
+
+
+// const updateProjectStatus = async (projectId) => {
+//   try {
+//     const project = await Project.findById(projectId);
+//     if (!project) {
+//       console.error("Project not found.");
+//       return { updated: false, message: "Project not found." };
+//     }
+
+//     const tasks = await Task.find({ projectId: projectId });
+
+//     const today = new Date();
+//     const startDate = new Date(project.startDate);
+//     const endDate = new Date(project.endDate);
+
+//     let newStatus = "Not Started";
+//     let message = "Default status applied: Not Started.";
+
+//     if (tasks.length > 0) {
+//       const hasInProgressTask = tasks.some(
+//         (task) => task.status === "In Progress"
+//       );
+
+//       const allTasksCompleted = tasks.every((task) => task.status === "Done");
+
+//       if (hasInProgressTask && today < startDate) {
+//         newStatus = "Not Started";
+//         message = "Project has In Progress tasks but has not reached start date.";
+//       } else if (hasInProgressTask && today >= startDate) {
+//         newStatus = "In Progress";
+//         message = "Project is now In Progress.";
+//       }
+
+//       if (allTasksCompleted) {
+//         newStatus = "Done";
+//         message = "All tasks completed: Project marked as Done.";
+//       }
+//     } else {
+//       // Nouveau cas : pas de tâche mais la date de début est atteinte
+//       if (today >= startDate && today <= endDate) {
+//         newStatus = "In Progress";
+//         message = "No tasks, but project start date is reached: status set to In Progress.";
+//       }
+//     }
+
+//     if (newStatus !== "Done" && newStatus !== "Canceled" && today > endDate) {
+//       newStatus = "Overdue";
+//       message = "Project is overdue.";
+//     }
+
+//     if (project.status !== newStatus) {
+//       await Project.findByIdAndUpdate(projectId, { status: newStatus });
+//       console.log(`Project ${projectId} updated to ${newStatus}`);
+//       return { updated: true, message };
+//     } else {
+//       console.log(`Project ${projectId} status unchanged (${newStatus})`);
+//       return { updated: false, message: `Status unchanged: ${newStatus}` };
+//     }
+//   } catch (error) {
+//     console.error("Error updating project status:", error);
+//     return {
+//       updated: false,
+//       message: "Error occurred while updating project status.",
+//     };
+//   }
+// };
+
 
 //delete project
 async function deleteSomeTasksFromProject(req, res) {

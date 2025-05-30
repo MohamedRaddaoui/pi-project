@@ -41,7 +41,6 @@ const Project=new Schema({
     category:{
         type:String,
         required: true,
-        default:'dev'
     },
     usersID:[{
         type: mongoose.Schema.ObjectId, 
