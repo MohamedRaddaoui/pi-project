@@ -338,4 +338,29 @@ router.get("/oauth2callback", eventController.handleCallBack);
 
 router.get("/user/:userId", auth, eventController.getUserEvents);
 
+/**
+ * @swagger
+ * /api/events/public:
+ *   get:
+ *     summary: Get all public events
+ *     tags: [Events]
+ *     responses:
+ *       200:
+ *         description: List of public events retrieved successfully
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               properties:
+ *                 count:
+ *                   type: integer
+ *                 events:
+ *                   type: array
+ *                   items:
+ *                     $ref: '#/components/schemas/Event'
+ *       500:
+ *         description: Server error
+ */
+router.get("/public", eventController.getPublicEvents);
+
 module.exports = router;
