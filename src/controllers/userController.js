@@ -10,6 +10,7 @@ dotenv.config();
 
 // Ajouter un utilisateur
 async function adduser(req, res) {
+  console.log('Request body:', req.body);
   console.log("File uploaded:", req.file);
   try {
     let { firstname, lastname, email, password, role } = req.body;
@@ -262,6 +263,20 @@ async function resetPassword(req, res) {
   }
 };
 
+async function getUserByEmail(req, res) {
+  try {
+    const { email } = req.body;
+    const user = await User.findOne({ email });
+    if (!user) {
+      return res.status(404).json({ error: "Utilisateur non trouvé" });
+    }
+    res.status(200).json(user);
+  } catch (err) {
+    console.log(err);
+    res.status(500).json({ error: "Erreur serveur" });
+  }
+}
+
 module.exports = {
   adduser,
   showuser,
@@ -273,5 +288,5 @@ module.exports = {
   logout,
   forgotPassword,
   resetPassword,
-
+  getUserByEmail,
 };

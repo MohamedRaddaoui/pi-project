@@ -2,10 +2,7 @@ const Event = require("../models/event"); // Import Event model
 const User = require("../models/user"); // Import User model
 const { syncEvents } = require("../services/syncEvent");
 const sendEmail = require("../../utils/sendEmail");
-const {
-  getAuthUrl,
-  oauth2Client,
-} = require("../config/googleAuth");
+const { getAuthUrl, oauth2Client } = require("../config/googleAuth");
 const { google } = require("googleapis");
 
 // 📌 Create an Event
@@ -98,7 +95,7 @@ exports.deleteEvent = async (req, res) => {
 exports.participateEvent = async (req, res) => {
   try {
     const { eventId } = req.params;
-    const { userId } = req.user;
+    const { userId } = req.body;
 
     const event = await Event.findById(eventId);
     if (!event) return res.status(404).json({ message: "Event not found" });
@@ -272,5 +269,80 @@ exports.handleCallBack = async (req, res) => {
   } catch (error) {
     console.error("Error during OAuth2 callback:", error);
     res.status(500).send("Error during Google authentication");
+  }
+};
+
+exports.addParticipants = async (req, res) => {
+  try {
+    const { eventId } = req.params;
+    const { userIds } = req.body; // userIds should be an array
+
+    if (!Array.isArray(userIds) || userIds.length === 0) {
+      return res
+        .status(400)
+        .json({ message: "userIds must be a non-empty array" });
+    }
+
+    const event = await Event.findById(eventId);
+    if (!event) return res.status(404).json({ message: "Event not found" });
+
+    // Filter out users already in attendees
+    const newUserIds = userIds.filter((id) => !event.attendees.includes(id));
+
+    if (newUserIds.length === 0) {
+      return res
+        .status(400)
+        .json({ message: "All users are already participants" });
+    }
+
+    // Check if all userIds exist in the User collection
+    const users = await User.find({ _id: { $in: newUserIds } });
+    if (users.length !== newUserIds.length) {
+      return res.status(404).json({ message: "One or more users not found" });
+    }
+
+    event.attendees.push(...newUserIds);
+    await event.save();
+
+    // Send email notification to each new participant
+    for (const user of users) {
+      if (user.email) {
+        await sendEmail(
+          user.email,
+          `🎉 You have been added to the event: ${event.title}`,
+          `
+            <div style="font-family: Arial, sans-serif; padding: 20px;">
+              <h3 style="color: #43a047;">You've been added to an event!</h3>
+              <p>Hi ${user.firstname || user.email},</p>
+              <p>You have been added as a participant to <strong>${
+                event.title
+              }</strong>.</p>
+              <p>Event details:</p>
+              <ul>
+                <li><strong>Date:</strong> ${
+                  event.date ? new Date(event.date).toLocaleString() : "N/A"
+                }</li>
+                <li><strong>Location:</strong> ${event.location || "N/A"}</li>
+              </ul>
+              <p>Event Description:</p>
+              <p>${event.description || "No description provided."}</p>
+              <p>Check your calendar for more details: </p>
+              <p><a href="${event.link || "http://localhost:4200/calendar"}">Calendar Link</a></p>
+              <p>If you have any questions, feel free to reach out.</p>
+              <p>See you there!</p>
+            </div>
+          `
+        );
+      }
+    }
+
+    res.status(200).json({
+      message: "Participants added successfully and notified by email",
+      attendees: event.attendees,
+    });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Error adding participants", error: error.message });
   }
 };

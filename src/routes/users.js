@@ -2,7 +2,7 @@ var express = require("express");
 var router = express.Router();
 const userController = require("../controllers/userController");
 const auth = require("../middlewares/auth");
-const upload = require('../middlewares/upload');
+const upload = require("../middlewares/upload");
 
 /* CRUD */
 /*router.post("/adduser", userController.adduser);*/
@@ -24,10 +24,12 @@ router.post("/forgot-password", userController.forgotPassword);
 
 router.post("/reset-password/:token", userController.resetPassword);
 // Exemple : ajout d'une photo lors de la création utilisateur
-router.post("/adduser", upload.single('photo'), userController.adduser);
+router.post("/adduser", upload.single("photo"), userController.adduser);
 
 // Exemple : mise à jour de la photo d’un utilisateur
 router.put("/updateuser/:id", upload.single("photo"), userController.updateuser);
 
+
+router.post("/find-by-email", userController.getUserByEmail);
 
 module.exports = router;

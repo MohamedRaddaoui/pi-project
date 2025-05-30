@@ -17,7 +17,9 @@ const TaskSchema = new mongoose.Schema(
     dueDate: { type: Date },
     projectId: { type: mongoose.Schema.Types.ObjectId, ref: "project", required: true },
     assignedUser: { type: mongoose.Schema.Types.ObjectId, ref: "User" },
-    comments: [{type: mongoose.Schema.Types.ObjectId, ref: "TaskComment"}],    
+    comments: [{ type: mongoose.Schema.Types.ObjectId, ref: "TaskComment" }],    
+    tags: { type: String, trim: true },
+
   },
   { timestamps: true }
 );

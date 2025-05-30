@@ -3,7 +3,7 @@ const Project = require('../src/models/project'); // Modèle Project
 const sendDeadlineReminder = require('../utils/emailReminder'); // Fonction pour envoyer l'email
 
 // Planification de la tâche cron pour l'exécution quotidienne à minuit
-cron.schedule('05 22 * * *', async () => {
+cron.schedule('13 17 * * *', async () => {
   console.log('Cron task is running at 00:27 AM...');
 
   try {
@@ -36,21 +36,34 @@ cron.schedule('05 22 * * *', async () => {
             console.log(`Envoi du rappel : Projet "${project.title}" en cours avec des tâches non complètes.`);
             const incompleteTaskList = incompleteTasks.map(task => `- ${task.title}`).join('\n');
 
-            const reminderMessage = `Objet : Suivi des tâches restantes – Projet "${project.title}"
+            const reminderMessage = `
+            <div style="font-family: Arial, sans-serif; font-size: 15px; color: #333;">
+              <p style="font-size: 14px; font-weight: bold; color: #2c3e50;">
+                Objet : Suivi des tâches restantes – Projet "${project.title}"
+              </p>
+          
+              <p>Bonjour ${user.firstname},</p>
+          
+              <p>
+                Nous approchons de la phase finale du projet <strong>"${project.title}"</strong>, et certaines tâches demeurent inachevées :
+              </p>
+          
+              <div>
+                ${incompleteTaskList}
+              </div>
+          
+              <p>
+                Nous vous prions de bien vouloir faire le point avec les membres de votre équipe afin de garantir la finalisation de l’ensemble des livrables avant la date limite fixée au <strong>${project.endDate.toLocaleDateString('fr-FR')}</strong>.
+              </p>
+          
+              <p>Cordialement,</p>
+              <p>L’équipe de gestion de projet</p>
+            </div>
+          `;
+          
 
-Bonjour ${user.firstname},
 
-Nous approchons de la phase finale du projet "${project.title}", et certaines tâches demeurent inachevées :
-
-${incompleteTaskList}
-
-Nous vous prions de bien vouloir faire le point avec les membres de votre équipe afin de garantir la finalisation de l’ensemble des livrables avant la date limite fixée au ${project.endDate.toDateString()}.
-
-Cordialement,
-L’équipe de gestion de projet`;
-
-
-            console.log("Contenu du message :", reminderMessage);
+            console.log("Contenu du message : bon recu");
 
             await sendDeadlineReminder(project, user, reminderMessage);
           } else {
