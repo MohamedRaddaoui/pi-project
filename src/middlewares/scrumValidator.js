@@ -11,6 +11,8 @@ exports.validateObjectId = (req, res, next) => {
 validStoryPoints = [0.5, 1, 2, 3, 5, 8, 13, 20, 40, 100];
 exports.validateUserStory = [
     body("title")
+      .notEmpty().withMessage("Title is required"),
+ body("description")
       .notEmpty().withMessage("Title is required")
       .matches(/^En tant que .* je veux .* afin de .*$/i)
       .withMessage("Title must follow the format: En tant que ... je veux ... afin de ..."),

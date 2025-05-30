@@ -1,6 +1,8 @@
 const Project = require("../models/project");
 const Task = require("../models/Task/task");
 const User = require("../models/user");
+const sendEmail = require('../../utils/sendEmail');
+const emailTemplates = require('../../utils/emailTemplates');
 
 // 📌 Create new Project
 async function createProject(req, res) {
@@ -160,11 +162,10 @@ async function assignUserToProject(req, res) {
     let updated = false;
     let messages = [];
 
+    // 3. Assignation selon le type
     if (userType === "ProjectManager") {
       if (project.ownerID) {
-        return res
-          .status(400)
-          .json({ message: "Project already has an owner" });
+        return res.status(400).json({ message: "Project already has an owner" });
       }
       project.ownerID = userId;
       project.usersID.push(userId);
@@ -185,10 +186,16 @@ async function assignUserToProject(req, res) {
       return res.status(400).json({ message: "Invalid userType" });
     }
 
+    // 4. Mise à jour de l'équipe
     project.team = project.usersID.length + (project.ownerID ? 1 : 0);
 
     if (updated) {
       await project.save();
+
+      // 5. Envoi d'email de notification
+      const { subject, html } = emailTemplates.assignment(user, project, userType);
+      await sendEmail(user.email, subject, html);
+
       return res.status(200).json({ message: messages.join(" & "), project });
     } else {
       return res.status(400).json({ message: messages.join(" & ") });

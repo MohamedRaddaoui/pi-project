@@ -1,6 +1,7 @@
 const ProductBacklog = require('../models/productBacklog')
 const userStory = require('../models/userStory');
 
+
 // Ajouter un nouveau ProductBacklog
 async function createProductBacklog(req, res) {
     try {
@@ -34,7 +35,9 @@ async function getAllProductBacklogs (req, res){
 // Récupérer un ProductBacklog spécifique
 async function getProductBacklogById(req, res){
     try {
-        const productBacklog = await ProductBacklog.findById(req.params.id).populate('projectID').populate('userStoriesId');
+        const productBacklog = await ProductBacklog.findById(req.params.id)
+        .populate('projectID')
+        .populate('userStoriesId');
         if (!productBacklog) {
             return res.status(404).json({ message: 'Product Backlog not found' });
         }
@@ -50,11 +53,16 @@ async function updateProductBacklog (req, res){
     
     try {
         const updatedProductBacklog = await ProductBacklog.findByIdAndUpdate(req.params.id,req.body,{ new: true });
+        console.log("ID du backlog :", req.params.id);
+console.log("Payload reçu :", req.body);
+
         if (!updatedProductBacklog) {
             return res.status(404).json({ message: 'Product Backlog not found' });
         }
+        
         res.status(200).json({ message: 'Product Backlog updated successfully!', updatedProductBacklog });
     } catch (error) {
+          console.error("Erreur dans updateProductBacklog:", error);
         res.status(500).json({ error: 'Error updating Product Backlog' });
     }
 };
