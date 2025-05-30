@@ -2,6 +2,7 @@ const express = require("express");
 const router = express.Router();
 const taskController = require("../../controllers/Task/taskController");
 const { validateTask, validateObjectId } = require("../../middlewares/validation");
+const auth = require("../../middlewares/auth");
 
 router.get("/socket-test", (req, res) => {
   res.render("socket-test");
@@ -36,7 +37,7 @@ router.get("/socket-test", (req, res) => {
  *         description: Validation error
  */
 
-router.post("/create", validateTask, taskController.createTask);
+router.post("/create", auth, validateTask, taskController.createTask);
 
 /**
  * @swagger
@@ -57,7 +58,7 @@ router.post("/create", validateTask, taskController.createTask);
  *                   items:
  *                     $ref: '#/components/schemas/Task'
  */
-router.get("/getAll", taskController.getAllTasks);
+router.get("/getAll",auth, taskController.getAllTasks);
 
 /**
  * @swagger
@@ -82,7 +83,7 @@ router.get("/getAll", taskController.getAllTasks);
  *       404:
  *         description: Task not found
  */
-router.get("/getbyId/:id", validateObjectId, taskController.getTaskById);
+router.get("/getbyId/:id",auth, validateObjectId, taskController.getTaskById);
 
 /**
  * @swagger
@@ -109,7 +110,7 @@ router.get("/getbyId/:id", validateObjectId, taskController.getTaskById);
  *       404:
  *         description: Task not found
  */
-router.put("/update/:id", validateObjectId, validateTask, taskController.updateTask);
+router.put("/update/:id", validateObjectId,auth, validateTask, taskController.updateTask);
 
 /**
  * @swagger
@@ -130,12 +131,12 @@ router.put("/update/:id", validateObjectId, validateTask, taskController.updateT
  *       404:
  *         description: Task not found
  */
-router.delete("/delete/:id", validateObjectId, taskController.deleteTask);
+router.delete("/delete/:id",auth, validateObjectId, taskController.deleteTask);
 
 router.get("/filter", taskController.filterTasks);
-router.put("/updateTaskAndSendEmail/:id", taskController.updateTaskAndSendEmail);
+router.put("/updateTaskAndSendEmail/:id",auth, taskController.updateTaskAndSendEmail);
 //cette route est pour tester le socket io seulement à ne pas afficher sur le swagger
-router.get("/socket-test", taskController.renderSocketTestPage);
-router.get("/taskhistory/:taskId", taskController.getTaskHistoryById);
+router.get("/socket-test",auth, taskController.renderSocketTestPage);
+router.get("/taskhistory/:taskId",auth, taskController.getTaskHistoryById);
 
 module.exports = router;

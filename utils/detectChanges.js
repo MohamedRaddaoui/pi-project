@@ -7,8 +7,8 @@ function detectChanges(oldTask, newTask) {
       key !== "__v" && key !== "updatedAt"
     ) {
       changes[key] = {
-        from: oldTask[key],
-        to: newTask[key],
+        oldValue: oldTask[key],
+        newValue: newTask[key],
       };
     }
   }
