@@ -46,7 +46,7 @@ exports.addComment = async (req, res) => {
 
     await comment.save();
 
-    // Ajouter l'ID du commentaire à la tâche
+    // Ajouter l"ID du commentaire à la tâche
     task.comments.push(comment._id);
     await task.save();
 
@@ -131,3 +131,75 @@ exports.getCommentsByTaskId = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+exports.downloadAttachment = async (req, res) => {
+  const { attachmentId } = req.params;
+
+  try {
+    // Trouver le commentaire contenant cet attachment
+    const comment = await TaskComment.findOne({ "attachments._id": attachmentId });
+
+    if (!comment) return res.status(404).json({ error: "Attachment not found" });
+
+    const attachment = comment.attachments.id(attachmentId);
+    if (!attachment) return res.status(404).json({ error: "Attachment not found" });
+
+    // Encodage UTF-8 du nom de fichier
+    const fileName = encodeURIComponent(attachment.filename);
+    res.setHeader("Content-Type", attachment.contentType || "application/octet-stream");
+    res.setHeader("Content-Disposition", `attachment; filename*=UTF-8""${fileName}`);
+
+    res.send(Buffer.from(attachment.data));
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.updateComment = async (req, res) => {
+  try {
+    const commentId = req.params.commentId;  // récupéré depuis l'URL
+    const { text } = req.body;
+    const files = req.files;
+
+    const comment = await TaskComment.findById(commentId);
+    if (!comment) {
+      return res.status(404).json({ error: "Commentaire non trouvé" });
+    }
+
+    // Mise à jour du texte
+    if (text) {
+      comment.text = text;
+
+      const { isFlagged } = await checkComment(text);
+      const sentimentResult = sentimentAnalyzer.analyze(text);
+      let sentiment = "neutral";
+      if (sentimentResult.score > 1) sentiment = "positive";
+      else if (sentimentResult.score < -1) sentiment = "negative";
+
+      comment.isFlagged = isFlagged;
+      comment.sentiment = sentiment;
+    }
+
+    // Ajouter de nouveaux fichiers
+    if (files && files.length > 0) {
+      const newAttachments = files.map(file => ({
+        filename: file.originalname,
+        contentType: file.mimetype,
+        data: file.buffer
+      }));
+      comment.attachments.push(...newAttachments);
+    }
+
+    await comment.save();
+
+    res.status(200).json({
+      message: "Commentaire mis à jour avec succès",
+      comment
+    });
+
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+

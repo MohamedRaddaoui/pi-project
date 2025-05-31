@@ -89,7 +89,7 @@ exports.filterTasks = async (req, res) => {
   try {
     const matchStage = {};
 
-    // Appliquer les filtres de base
+    // Filtres de base
     if (req.query.assignedUser) {
       matchStage.assignedUser = new mongoose.Types.ObjectId(req.query.assignedUser);
     }
@@ -104,11 +104,10 @@ exports.filterTasks = async (req, res) => {
     }
 
     const pipeline = [
-      // D'abord, filtrer
-      {
-        $match: matchStage,
-      },
-      // Ensuite, lookup des commentaires
+      // Étape 1 : match initial
+      { $match: matchStage },
+
+      // Étape 2 : commentaires
       {
         $lookup: {
           from: "taskcomments",
@@ -117,7 +116,8 @@ exports.filterTasks = async (req, res) => {
           as: "comments",
         },
       },
-      // Puis, lookup de l'utilisateur
+
+      // Étape 3 : utilisateur assigné
       {
         $lookup: {
           from: "users",
@@ -129,12 +129,37 @@ exports.filterTasks = async (req, res) => {
       {
         $unwind: {
           path: "$assignedUser",
-          preserveNullAndEmptyArrays: true
-        }
+          preserveNullAndEmptyArrays: true,
+        },
+      },
+
+      // Étape 4 : projet
+      {
+        $lookup: {
+          from: "projects", // nom de la collection MongoDB des projets
+          localField: "projectId",
+          foreignField: "_id",
+          as: "projectId",
+        },
+      },
+      {
+        $unwind: {
+          path: "$projectId",
+          preserveNullAndEmptyArrays: true,
+        },
       },
     ];
 
-    // Filtre pour les commentaires inappropriés
+    // Étape 5 : match sur le titre du projet si présent
+    if (req.query.projectTitle) {
+      pipeline.push({
+        $match: {
+          "projectId.title": { $regex: `^${req.query.projectTitle}$` }
+        },
+      });
+    }
+
+    // Étape 6 : commentaires inappropriés
     if (req.query.inappropriateComments === "true") {
       pipeline.push({
         $match: {
@@ -157,6 +182,7 @@ exports.filterTasks = async (req, res) => {
 
 
 
+
 exports.updateTaskAndSendEmail = async (req, res) => {
   try {
     const { id } = req.params;
@@ -172,70 +198,65 @@ exports.updateTaskAndSendEmail = async (req, res) => {
     const updatedTask = await Task.findByIdAndUpdate(id, req.body, {
       new: true,
       runValidators: true,
-    }).populate("assignedUser").populate("comments");
+    }).populate({
+      path: "comments",
+      populate: {
+        path: "user",
+        select: "firstname lastname email"
+      }
+    }).populate("assignedUser", "email");
 
     // 3. Identifier les changements
-    const changes = {};
-    for (const key in req.body) {
-      if (
-        oldTask[key] &&
-        req.body[key] &&
-        JSON.stringify(oldTask[key]) !== JSON.stringify(req.body[key])
-      ) {
-        changes[key] = {
-          from: oldTask[key],
-          to: req.body[key]
-        };
-      }
-    }
-
-    //journaliser les changements dans la collection TaskHistory
     const detectedChanges = detectChanges(oldTask, updatedTask.toObject());
+
+    // 4. Journaliser les changements
     if (Object.keys(detectedChanges).length > 0) {
       await TaskHistory.create({
         task: updatedTask._id,
-        updatedBy: "67fef2f193e40a970677e8c5", 
+        updatedBy: req.user.userId,
         changes: detectedChanges,
       });
     }
-    // 4. Identifier les utilisateurs concernés
+
+    // 5. Identifier les utilisateurs concernés
     const commenters = updatedTask.comments.map(c => c.user?._id?.toString()).filter(Boolean);
     const responsible = updatedTask.assignedUser?._id?.toString();
 
     const userIdsToNotify = [...new Set([...commenters, responsible])];
+
     const io = req.app.get("io");
-    // 5. Envoi des emails
+
+    // 6. Envoi des notifications et emails
     for (const userId of userIdsToNotify) {
-      const user = await User.findById(userId); // Récupérer l"utilisateur concerné
+      const user = await User.findById(userId);
       if (user) {
-        // Préparer les données pour le template
         const templateData = {
-          userName: user.name,
+          userName: user.name || user.firstname || "Utilisateur",
           taskTitle: updatedTask.title,
           oldStatus: oldTask.status,
           newStatus: updatedTask.status,
           taskLink: `${process.env.BASE_URL}/tasks/${updatedTask._id}`,
-          changes: JSON.stringify(changes, null, 2), // Afficher les changements de manière lisible
+          changes: JSON.stringify(detectedChanges, null, 2),
         };
 
-        // Envoyer l"email avec les données et la template
         await sendEmail(user.email, "Task Updated", templateData);
-        //send notif
+
         io.to(userId).emit("taskUpdated", {
-          message: `la tâche ${updatedTask.title} a été mise à jour. Vérifiez votre email.`,
-        taskId: updatedTask._id,
+          message: `La tâche "${updatedTask.title}" a été mise à jour. Vérifiez votre email.`,
+          taskId: updatedTask._id,
         });
-         console.log(`Notification sent to user ${userId}`);
+
+        console.log(`Notification envoyée à l'utilisateur ${userId}`);
       }
     }
-    //6 - update project 
+
+    // 7. Mettre à jour le projet lié
     await updateProjectStatus(updatedTask.projectId);
 
-    res.status(200).json({ message: "Task updated successfully", task: updatedTask });
-
-    
+    res.status(200).json({ message: "Tâche mise à jour avec succès", task: updatedTask });
 
   } catch (error) {
+    console.error("Erreur lors de la mise à jour de la tâche :", error);
     res.status(400).json({ error: error.message });
   }
 };

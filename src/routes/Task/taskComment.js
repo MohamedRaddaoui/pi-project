@@ -14,4 +14,10 @@ router.delete(
 );
 router.get("/getCommentsbyTaskId/:taskId", commentController.getCommentsByTaskId);
 
+router.get(
+  "/:commentId/attachments/:attachmentId",
+  commentController.downloadAttachment
+);
+router.put("/updateComment/:commentId", upload, commentController.updateComment);
+
 module.exports = router;
