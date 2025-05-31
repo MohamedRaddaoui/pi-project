@@ -327,7 +327,9 @@ exports.addParticipants = async (req, res) => {
               <p>Event Description:</p>
               <p>${event.description || "No description provided."}</p>
               <p>Check your calendar for more details: </p>
-              <p><a href="${event.link || "http://localhost:4200/calendar"}">Calendar Link</a></p>
+              <p><a href="${
+                event.link || "http://localhost:4200/calendar"
+              }">Calendar Link</a></p>
               <p>If you have any questions, feel free to reach out.</p>
               <p>See you there!</p>
             </div>
@@ -344,5 +346,23 @@ exports.addParticipants = async (req, res) => {
     res
       .status(500)
       .json({ message: "Error adding participants", error: error.message });
+  }
+};
+
+exports.getPublicEvents = async (req, res) => {
+  try {
+    const publicEvents = await Event.find({ visibility: "Public" })
+      .populate("attendees createdBy")
+      .sort({ date: 1 }); // Sort by date ascending
+
+    res.status(200).json({
+      count: publicEvents.length,
+      events: publicEvents,
+    });
+  } catch (error) {
+    res.status(500).json({
+      message: "Error fetching public events",
+      error: error.message,
+    });
   }
 };
